@@ -93,18 +93,12 @@ void display()
 	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");  
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
-	glm::mat4 viewingMatrix = glm::mat4(1.0f);
-	
-	//translation and rotation for view
-	viewingMatrix = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, -50));
+	// The camera matrix
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 100.0f); // The inital position of the camera in the 3D space
+	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
 
-	//apply a rotation to the view
-	//static float angle = 0.0f;
-	//angle += 0.01;
-	//viewingMatrix = glm::rotate(viewingMatrix, angle, glm::vec3(1.0f, 0.0f, 0.0));
-
-	//use of glm::lookAt for viewing instead.
-	//viewingMatrix = glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,100), glm::vec3(0.0f, 1.0f, 0.0));
+	glm::mat4 viewingMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
