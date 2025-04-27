@@ -74,7 +74,6 @@ void reshape(int width, int height);				//called when the window is resized
 void init();				//called in winmain when the program starts.
 void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
-void updateTransform(float xinc, float yinc, float zinc);
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()									
@@ -292,40 +291,23 @@ void specialUp(int key, int x, int y)
 
 void processKeys()
 {
-	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
+	float moveSpeed = 0.025f;
 	if (Left)
 	{
-		spinYinc = -0.001f;
+		pos.x -= moveSpeed;
 	}
 	if (Right)
 	{
-		spinYinc = 0.001f;
+		pos.x += moveSpeed;
 	}
 	if (Up)
 	{
-		spinXinc = 0.001f;
+		pos.z -= moveSpeed;
 	}
 	if (Down)
 	{
-		spinXinc = -0.001f;
+		pos.z += moveSpeed;
 	}
-	if (Home)
-	{
-		spinZinc = 0.001f;
-	}
-	if (End)
-	{
-		spinZinc = -0.001f;
-	}
-	updateTransform(spinXinc, spinYinc, spinZinc);
-}
-
-
-void updateTransform(float xinc, float yinc, float zinc)
-{
-	objectRotation = glm::rotate(objectRotation, xinc, glm::vec3(1,0,0));
-	objectRotation = glm::rotate(objectRotation, yinc, glm::vec3(0,1,0));
-	objectRotation = glm::rotate(objectRotation, zinc, glm::vec3(0,0,1));
 }
 
 void idle()
