@@ -83,7 +83,7 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()									
 {
-	cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
+	//cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
 	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -286,11 +286,48 @@ void specialUp(int key, int x, int y)
 	}
 }
 
+void keyboard(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+	case 'w':
+		Up = true;
+		break;
+	case 's':
+		Down = true;
+		break;
+	case 'a':
+		Left = true;
+		break;
+	case 'd':
+		Right = true;
+		break;
+	}
+}
+
+void keyboardUp(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+	case 'w':
+		Up = false;
+		break;
+	case 's': 
+		Down = false;
+		break;
+	case 'a': 
+		Left = false;
+		break;
+	case 'd': 
+		Right = false;
+		break;
+	}
+}
+
+// This will need to be changed once that we have mouse movement, as we want to go forward relative to where we are looking not world space 
 void processKeys()
 {
-
-	// If i want to 
-	float moveSpeed = 0.25f;
+	float moveSpeed = 0.01f;
 
 	if (Up) {
 		cameraPos.z -= moveSpeed;
@@ -305,7 +342,7 @@ void processKeys()
 	if (Right) {
 		cameraPos.x += moveSpeed;
 	}
-	cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f);
+	cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f); 
 }
 
 void idle()
@@ -350,6 +387,8 @@ int main(int argc, char **argv)
 	//specify which function will be called to refresh the screen.
 	glutDisplayFunc(display);
 
+	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboardUp);
 	glutSpecialFunc(special);
 	glutSpecialUpFunc(specialUp);
 
