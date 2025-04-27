@@ -75,9 +75,17 @@ void init();				//called in winmain when the program starts.
 void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
 
+// The camera matrix (viewingMatrix called inside display())
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 100.0f); // The inital position of the camera in the 3D space
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
+
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()									
 {
+	cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
+	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
@@ -92,11 +100,6 @@ void display()
 	//Set the projection matrix in the shader
 	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");  
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-
-	// The camera matrix
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 100.0f); // The inital position of the camera in the 3D space
-	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
-	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
 
 	glm::mat4 viewingMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
@@ -285,23 +288,24 @@ void specialUp(int key, int x, int y)
 
 void processKeys()
 {
-	float moveSpeed = 0.025f;
-	if (Left)
-	{
-		pos.x -= moveSpeed;
+
+	// If i want to 
+	float moveSpeed = 0.25f;
+
+	if (Up) {
+		cameraPos.z -= moveSpeed;
 	}
-	if (Right)
-	{
-		pos.x += moveSpeed;
+	if (Down) {
+		cameraPos.z += moveSpeed;
 	}
-	if (Up)
-	{
-		pos.z -= moveSpeed;
+
+	if (Left) {
+		cameraPos.x -= moveSpeed;
 	}
-	if (Down)
-	{
-		pos.z += moveSpeed;
+	if (Right) {
+		cameraPos.x += moveSpeed;
 	}
+	cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f);
 }
 
 void idle()
