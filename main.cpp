@@ -295,8 +295,7 @@ void processKeys()
 		cameraTarget += right * cameraSpeed;
 	}
 
-	// Flying up (Space bar)
-	if (keyState[32]) {  // 32 is the ASCII value for Space
+	if (keyState[32]) {  // 32 is ASCII for space
 		cameraPos += up * cameraSpeed;
 		cameraTarget += up * cameraSpeed;
 	}
@@ -307,8 +306,6 @@ void processKeys()
 		cameraTarget -= up * cameraSpeed;
 	}
 }
-
-
 
 void mouse_callback(int xpos, int ypos)
 {
