@@ -55,7 +55,7 @@ float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
 //
 int	mouse_x = 0, mouse_y = 0;
 bool LeftPressed = false;
-int screenWidth = 600, screenHeight = 600;
+int screenWidth = 1280, screenHeight = 720;
 
 //booleans to handle when the arrow keys are pressed or released.
 bool Left = false;
@@ -336,23 +336,32 @@ void keyboardUp(unsigned char key, int x, int y)
 // This will need to be changed once that we have mouse movement, as we want to go forward relative to where we are looking not world space 
 void processKeys()
 {
-	float moveSpeed = 0.01f;
+	// Calculate the forward vector (cameraTarget - cameraPos normalized)
+	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
+
+	// Calculate the right vector (cross product of forward and up)
+	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+
+	float cameraSpeed = 0.05f; // You can adjust the speed
 
 	if (Up) {
-		cameraPos.z -= moveSpeed;
+		cameraPos += forward * cameraSpeed;
+		cameraTarget += forward * cameraSpeed;
 	}
 	if (Down) {
-		cameraPos.z += moveSpeed;
+		cameraPos -= forward * cameraSpeed;
+		cameraTarget -= forward * cameraSpeed;
 	}
-
 	if (Left) {
-		cameraPos.x -= moveSpeed;
+		cameraPos -= right * cameraSpeed;
+		cameraTarget -= right * cameraSpeed;
 	}
 	if (Right) {
-		cameraPos.x += moveSpeed;
+		cameraPos += right * cameraSpeed;
+		cameraTarget += right * cameraSpeed;
 	}
-	//cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f);
 }
+
 
 void mouse_callback(int xpos, int ypos)
 {
