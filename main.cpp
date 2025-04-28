@@ -28,7 +28,7 @@ CShader* myBasicShader;
 
 float amount = 0;
 float temp = 0.002f;
-	
+
 CThreeDModel boxLeft, boxRight, boxFront;
 CThreeDModel model; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
@@ -39,23 +39,23 @@ glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
 glm::mat4 objectRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
-glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
+glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f); //vector for the position of the object.
 
 //Material properties
-float Material_Ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
-float Material_Diffuse[4] = {0.8f, 0.8f, 0.5f, 1.0f};
-float Material_Specular[4] = {0.9f,0.9f,0.8f,1.0f};
+float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+float Material_Diffuse[4] = { 0.8f, 0.8f, 0.5f, 1.0f };
+float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
 float Material_Shininess = 50;
 
 //Light Properties
-float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.6f, 1.0f};
-float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
-float LightPos[4] = {0.0f, 0.0f, 1.0f, 0.0f};
+float Light_Ambient_And_Diffuse[4] = { 0.8f, 0.8f, 0.6f, 1.0f };
+float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
+float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
 
 //
-int	mouse_x=0, mouse_y=0;
+int	mouse_x = 0, mouse_y = 0;
 bool LeftPressed = false;
-int screenWidth=600, screenHeight=600;
+int screenWidth = 600, screenHeight = 600;
 
 //booleans to handle when the arrow keys are pressed or released.
 bool Left = false;
@@ -65,8 +65,8 @@ bool Down = false;
 bool Home = false;
 bool End = false;
 
-float spin=180;
-float speed=0;
+float spin = 180;
+float speed = 0;
 
 //OPENGL FUNCTION PROTOTYPES
 void display();				//called in winmain to draw everything to the screen
@@ -80,25 +80,32 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 100.0f); // The inital position of t
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
 
+// Mouse control variables
+float yaw = -90.0f;  // Horizontal angle (initialized facing -Z)
+float pitch = 0.0f;  // Vertical angle
+float lastX = screenWidth / 2.0f;
+float lastY = screenHeight / 2.0f;
+bool firstMouse = true;
+
 /*************    START OF OPENGL FUNCTIONS   ****************/
-void display()									
+void display()
 {
 	//cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
 	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
 	//Part for displacement shader.
 	amount += temp;
-	if(amount > 1.0f || amount < -1.5f)
+	if (amount > 1.0f || amount < -1.5f)
 		temp = -temp;
 	//amount = 0;
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "displacement"), amount);
 
 	//Set the projection matrix in the shader
-	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");  
+	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	glm::mat4 viewingMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
@@ -118,15 +125,15 @@ void display()
 	//pos.x += objectRotation[2][0]*0.0003;
 	//pos.y += objectRotation[2][1]*0.0003;
 	//pos.z += objectRotation[2][2]*0.0003;
-	
+
 	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
 	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
-	
+
 	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	
+
 	model.DrawElementsUsingVBO(myShader);
 
 	//Switch to basic shader to draw the lines for the bounding boxes
@@ -144,7 +151,7 @@ void display()
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-	
+
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
@@ -159,35 +166,35 @@ void display()
 
 void reshape(int width, int height)		// Resize the OpenGL window
 {
-	screenWidth=width; screenHeight = height;           // to ensure the mouse coordinates match 
-														// we will use these values to set the coordinate system
+	screenWidth = width; screenHeight = height;           // to ensure the mouse coordinates match 
+	// we will use these values to set the coordinate system
 
-	glViewport(0,0,width,height);						// Reset The Current Viewport
+	glViewport(0, 0, width, height);						// Reset The Current Viewport
 
 	//Set the projection matrix
-	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth/(GLfloat)screenHeight, 1.0f, 200.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 200.0f);
 }
 void init()
 {
-	glClearColor(1.0,1.0,1.0,0.0);						//sets the clear colour to yellow
-														//glClear(GL_COLOR_BUFFER_BIT) in the display function
-														//will clear the buffer to this colour
+	glClearColor(1.0, 1.0, 1.0, 0.0);						//sets the clear colour to yellow
+	//glClear(GL_COLOR_BUFFER_BIT) in the display function
+	//will clear the buffer to this colour
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
 
 
 	myShader = new CShader();
 	//if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformationsWithDisplacement.vert", "glslfiles/basicTransformationsWithDisplacement.frag"))
-	if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
+	if (!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
 	{
 		cout << "failed to load shader" << endl;
-	}		
+	}
 
 	myBasicShader = new CShader();
-	if(!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
+	if (!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
 	{
 		cout << "failed to load shader" << endl;
-	}		
+	}
 
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
@@ -198,9 +205,9 @@ void init()
 	objectRotation = glm::mat4(1.0f);
 
 	cout << " loading model " << endl;
-	if(objLoader.LoadModel("TestModels/axes.obj"))//returns true if the model is loaded
+	if (objLoader.LoadModel("TestModels/axes.obj"))//returns true if the model is loaded
 	{
-		cout << " model loaded " << endl;		
+		cout << " model loaded " << endl;
 
 		//copy data from the OBJLoader object to the threedmodel class
 		model.ConstructModelFromOBJLoader(objLoader);
@@ -211,16 +218,16 @@ void init()
 		model.CalcCentrePoint();
 		model.CentreOnZero();
 
-	
+
 		model.InitVBO(myShader);
 	}
 	else
 	{
 		cout << " model failed to load " << endl;
 	}
-	
 
-	
+
+
 	if (objLoader.LoadModel("TestModels/boxleft.obj"))//returns true if the model is loaded
 	{
 		boxLeft.ConstructModelFromOBJLoader(objLoader);
@@ -234,6 +241,8 @@ void init()
 		boxRight.ConstructModelFromOBJLoader(objLoader);
 		boxRight.InitVBO(myShader);
 	}
+	glutSetCursor(GLUT_CURSOR_NONE);
+
 }
 
 void special(int key, int x, int y)
@@ -282,7 +291,7 @@ void specialUp(int key, int x, int y)
 		break;
 	case GLUT_KEY_END:
 		End = false;
-		break;		
+		break;
 	}
 }
 
@@ -312,13 +321,13 @@ void keyboardUp(unsigned char key, int x, int y)
 	case 'w':
 		Up = false;
 		break;
-	case 's': 
+	case 's':
 		Down = false;
 		break;
-	case 'a': 
+	case 'a':
 		Left = false;
 		break;
-	case 'd': 
+	case 'd':
 		Right = false;
 		break;
 	}
@@ -342,13 +351,51 @@ void processKeys()
 	if (Right) {
 		cameraPos.x += moveSpeed;
 	}
-	cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f); 
+	//cameraTarget = cameraPos + glm::vec3(0.0f, 0.0f, -1.0f);
 }
+
+void mouse_callback(int xpos, int ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed
+
+	float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraTarget = glm::normalize(direction) + cameraPos;
+
+	// After handling movement, reset mouse to center
+	glutWarpPointer(screenWidth / 2, screenHeight / 2);
+	lastX = screenWidth / 2;
+	lastY = screenHeight / 2;
+}
+
+
 
 void idle()
 {
 	spin += speed;
-	if(spin > 360)
+	if (spin > 360)
 		spin = 0;
 
 	processKeys();
@@ -357,7 +404,7 @@ void idle()
 }
 /**************** END OPENGL FUNCTIONS *************************/
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 
@@ -393,6 +440,8 @@ int main(int argc, char **argv)
 	glutSpecialUpFunc(specialUp);
 
 	glutIdleFunc(idle);
+	glutPassiveMotionFunc(mouse_callback);
+
 
 	//starts the main loop. Program loops and calls callback functions as appropriate.
 	glutMainLoop();
