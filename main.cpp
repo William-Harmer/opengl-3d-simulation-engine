@@ -65,8 +65,14 @@ bool Down = false;
 bool Home = false;
 bool End = false;
 
+bool Space = false;
+bool Shift = false;
+
 float spin = 180;
 float speed = 0;
+
+bool keyState[256] = { false };  // Array to store the state of each key (256 keys)
+
 
 //OPENGL FUNCTION PROTOTYPES
 void display();				//called in winmain to draw everything to the screen
@@ -245,122 +251,63 @@ void init()
 
 }
 
-void special(int key, int x, int y)
-{
-	switch (key)
-	{
-	case GLUT_KEY_LEFT:
-		Left = true;
-		break;
-	case GLUT_KEY_RIGHT:
-		Right = true;
-		break;
-	case GLUT_KEY_UP:
-		Up = true;
-		break;
-	case GLUT_KEY_DOWN:
-		Down = true;
-		break;
-	case GLUT_KEY_HOME:
-		Home = true;
-		break;
-	case GLUT_KEY_END:
-		End = true;
-		break;
-	}
-}
-
-void specialUp(int key, int x, int y)
-{
-	switch (key)
-	{
-	case GLUT_KEY_LEFT:
-		Left = false;
-		break;
-	case GLUT_KEY_RIGHT:
-		Right = false;
-		break;
-	case GLUT_KEY_UP:
-		Up = false;
-		break;
-	case GLUT_KEY_DOWN:
-		Down = false;
-		break;
-	case GLUT_KEY_HOME:
-		Home = false;
-		break;
-	case GLUT_KEY_END:
-		End = false;
-		break;
-	}
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
-	switch (key)
-	{
-	case 'w':
-		Up = true;
-		break;
-	case 's':
-		Down = true;
-		break;
-	case 'a':
-		Left = true;
-		break;
-	case 'd':
-		Right = true;
-		break;
-	}
+	keyState[key] = true;  // Set the key state to true when pressed
 }
 
 void keyboardUp(unsigned char key, int x, int y)
 {
-	switch (key)
-	{
-	case 'w':
-		Up = false;
-		break;
-	case 's':
-		Down = false;
-		break;
-	case 'a':
-		Left = false;
-		break;
-	case 'd':
-		Right = false;
-		break;
-	}
+	keyState[key] = false; // Set the key state to false when released
 }
 
-// This will need to be changed once that we have mouse movement, as we want to go forward relative to where we are looking not world space 
+void special(int key, int x, int y)
+{
+}
+
+void specialUp(int key, int x, int y)
+{
+}
+
 void processKeys()
 {
-	// Calculate the forward vector (cameraTarget - cameraPos normalized)
-	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
+	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);  // forward vector
+	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));  // right vector
+	glm::vec3 up = cameraUp;  // camera's up vector (for flying)
 
-	// Calculate the right vector (cross product of forward and up)
-	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+	float cameraSpeed = 0.05f; // You can adjust the movement speed
 
-	float cameraSpeed = 0.05f; // You can adjust the speed
-
-	if (Up) {
+	// WASD movement
+	if (keyState['w']) {
 		cameraPos += forward * cameraSpeed;
 		cameraTarget += forward * cameraSpeed;
 	}
-	if (Down) {
+	if (keyState['s']) {
 		cameraPos -= forward * cameraSpeed;
 		cameraTarget -= forward * cameraSpeed;
 	}
-	if (Left) {
+	if (keyState['a']) {
 		cameraPos -= right * cameraSpeed;
 		cameraTarget -= right * cameraSpeed;
 	}
-	if (Right) {
+	if (keyState['d']) {
 		cameraPos += right * cameraSpeed;
 		cameraTarget += right * cameraSpeed;
 	}
+
+	// Flying up (Space bar)
+	if (keyState[32]) {  // 32 is the ASCII value for Space
+		cameraPos += up * cameraSpeed;
+		cameraTarget += up * cameraSpeed;
+	}
+
+	// Flying down (Shift key)
+	if (keyState['z']) {
+		cameraPos -= up * cameraSpeed;
+		cameraTarget -= up * cameraSpeed;
+	}
 }
+
 
 
 void mouse_callback(int xpos, int ypos)
@@ -443,11 +390,10 @@ int main(int argc, char** argv)
 	//specify which function will be called to refresh the screen.
 	glutDisplayFunc(display);
 
+	glutSpecialFunc(special);      // For handling special keys like Shift
+	glutSpecialUpFunc(specialUp);  // For handling when special keys are released
 	glutKeyboardFunc(keyboard);
 	glutKeyboardUpFunc(keyboardUp);
-	glutSpecialFunc(special);
-	glutSpecialUpFunc(specialUp);
-
 	glutIdleFunc(idle);
 	glutPassiveMotionFunc(mouse_callback);
 
