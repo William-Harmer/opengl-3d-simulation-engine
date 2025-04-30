@@ -20,7 +20,7 @@ using namespace std;
 #include "shaders\Shader.h"
 
 CShader* myShader;  ///shader object 
-CShader* myBasicShader;
+//CShader* myBasicShader;
 
 //MODEL LOADING
 #include "3DStruct\threeDModel.h"
@@ -52,24 +52,7 @@ float Light_Ambient_And_Diffuse[4] = { 0.8f, 0.8f, 0.6f, 1.0f };
 float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
 float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
 
-//
-int	mouse_x = 0, mouse_y = 0;
-bool LeftPressed = false;
 int screenWidth = 1280, screenHeight = 720;
-
-//booleans to handle when the arrow keys are pressed or released.
-bool Left = false;
-bool Right = false;
-bool Up = false;
-bool Down = false;
-bool Home = false;
-bool End = false;
-
-bool Space = false;
-bool Shift = false;
-
-float spin = 180;
-float speed = 0;
 
 bool keyState[256] = { false };  // Array to store the state of each key (256 keys)
 
@@ -132,39 +115,59 @@ void display()
 	//pos.y += objectRotation[2][1]*0.0003;
 	//pos.z += objectRotation[2][2]*0.0003;
 
-	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
-	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	//glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
+	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
+	//glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
-
-	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
-	model.DrawElementsUsingVBO(myShader);
+	//model.DrawElementsUsingVBO(myShader);
 
 	//Switch to basic shader to draw the lines for the bounding boxes
-	glUseProgram(myBasicShader->GetProgramObjID());
-	projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
-	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	//glUseProgram(myBasicShader->GetProgramObjID());
+	//projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
+	//glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+	//glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
 	//model.DrawAllBoxesForOctreeNodes(myBasicShader);
 	//model.DrawBoundingBox(myBasicShader);
 	//	model.CalcBoundingBox()
 	//model.DrawOctreeLeaves(myBasicShader);
 
+	
+	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	// Ok so calculating the centre point is only in its local space
+	// But we know if we do 0,0,0 that the objects are being centered.
+	// But if the objects are centeres why is the cart not going to the middle?
+	//Vector3d* centre = wheel.GetCentrePoint();
+	//glm::vec3 wheelCentre(centre->x, centre->y, centre->z);
+	//std::cout << "Centre Point: (" << centre->x << ", " << centre->y << ", " << centre->z << ")" << std::endl;
+	//std::cout << "Wheel Centre: (" << wheelCentre.x << ", " << wheelCentre.y << ", " << wheelCentre.z << ")" << std::endl;
+	
 
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	wheelBase.DrawElementsUsingVBO(myShader);
+	//wheelBase.DrawBoundingBox(myShader);
+
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	wheel.DrawElementsUsingVBO(myShader);
+	//wheel.DrawBoundingBox(myShader);
+
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	cart.DrawElementsUsingVBO(myShader);
+	//cart.DrawBoundingBox(myShader);
 
 	glFlush();
 	glutSwapBuffers();
@@ -196,11 +199,11 @@ void init()
 		cout << "failed to load shader" << endl;
 	}
 
-	myBasicShader = new CShader();
-	if (!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
-	{
-		cout << "failed to load shader" << endl;
-	}
+	//myBasicShader = new CShader();
+	//if (!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
+	//{
+	//	cout << "failed to load shader" << endl;
+	//}
 
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
@@ -362,10 +365,6 @@ void mouse_callback(int xpos, int ypos)
 
 void idle()
 {
-	spin += speed;
-	if (spin > 360)
-		spin = 0;
-
 	processKeys();
 
 	glutPostRedisplay();
@@ -401,13 +400,12 @@ int main(int argc, char** argv)
 	glutReshapeFunc(reshape);
 	//specify which function will be called to refresh the screen.
 	glutDisplayFunc(display);
-
 	glutSpecialFunc(special);      // For handling special keys like Shift
 	glutSpecialUpFunc(specialUp);  // For handling when special keys are released
 	glutKeyboardFunc(keyboard);
 	glutKeyboardUpFunc(keyboardUp);
-	glutIdleFunc(idle);
 	glutPassiveMotionFunc(mouse_callback);
+	glutIdleFunc(idle);
 
 
 	//starts the main loop. Program loops and calls callback functions as appropriate.
