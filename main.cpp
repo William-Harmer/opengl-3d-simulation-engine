@@ -29,7 +29,7 @@ CShader* myBasicShader;
 float amount = 0;
 float temp = 0.002f;
 
-CThreeDModel boxLeft, boxRight, boxFront;
+CThreeDModel wheelBase, wheel, cart;
 CThreeDModel model; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
@@ -82,7 +82,7 @@ void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
 
 // The camera matrix (viewingMatrix called inside display())
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 100.0f); // The inital position of the camera in the 3D space
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 1000.0f); // The inital position of the camera in the 3D space
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
 
@@ -162,9 +162,9 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	boxLeft.DrawElementsUsingVBO(myShader);
-	boxRight.DrawElementsUsingVBO(myShader);
-	boxFront.DrawElementsUsingVBO(myShader);
+	wheelBase.DrawElementsUsingVBO(myShader);
+	wheel.DrawElementsUsingVBO(myShader);
+	cart.DrawElementsUsingVBO(myShader);
 
 	glFlush();
 	glutSwapBuffers();
@@ -178,7 +178,7 @@ void reshape(int width, int height)		// Resize the OpenGL window
 	glViewport(0, 0, width, height);						// Reset The Current Viewport
 
 	//Set the projection matrix
-	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 200.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 2000.0f);
 }
 void init()
 {
@@ -210,6 +210,7 @@ void init()
 	//to the identity matrix
 	objectRotation = glm::mat4(1.0f);
 
+
 	cout << " loading model " << endl;
 	if (objLoader.LoadModel("TestModels/axes.obj"))//returns true if the model is loaded
 	{
@@ -218,11 +219,13 @@ void init()
 		//copy data from the OBJLoader object to the threedmodel class
 		model.ConstructModelFromOBJLoader(objLoader);
 
+
+
 		//if you want to translate the object to the origin of the screen,
 		//first calculate the centre of the object, then move all the vertices
 		//back so that the centre is on the origin.
-		model.CalcCentrePoint();
-		model.CentreOnZero();
+		/*model.CalcCentrePoint();
+		model.CentreOnZero();*/
 
 
 		model.InitVBO(myShader);
@@ -232,20 +235,32 @@ void init()
 		cout << " model failed to load " << endl;
 	}
 
-
-
-	if (objLoader.LoadModel("TestModels/boxleft.obj"))//returns true if the model is loaded
+	if (objLoader.LoadModel("TestModels/wheelbase.obj"))//returns true if the model is loaded
 	{
-		boxLeft.ConstructModelFromOBJLoader(objLoader);
-
-		//Place to centre geometry before creating VBOs.
-
-		boxLeft.InitVBO(myShader);
+		wheelBase.ConstructModelFromOBJLoader(objLoader);
+		wheelBase.InitVBO(myShader);
 	}
-	if (objLoader.LoadModel("TestModels/boxRight.obj"))//returns true if the model is loaded
+	else
 	{
-		boxRight.ConstructModelFromOBJLoader(objLoader);
-		boxRight.InitVBO(myShader);
+		cout << " model failed to load " << endl;
+	}
+	if (objLoader.LoadModel("TestModels/wheel.obj"))//returns true if the model is loaded
+	{
+		wheel.ConstructModelFromOBJLoader(objLoader);
+		wheel.InitVBO(myShader);
+	}
+	else
+	{
+		cout << " model failed to load " << endl;
+	}
+	if (objLoader.LoadModel("TestModels/cart.obj"))//returns true if the model is loaded
+	{
+		cart.ConstructModelFromOBJLoader(objLoader);
+		cart.InitVBO(myShader);
+	}
+	else
+	{
+		cout << " model failed to load " << endl;
 	}
 	glutSetCursor(GLUT_CURSOR_NONE);
 
