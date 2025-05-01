@@ -326,6 +326,12 @@ void processKeys()
 		cameraPos -= up * cameraSpeed;
 		cameraTarget -= up * cameraSpeed;
 	}
+
+	if (keyState[27]) // Escape
+	{
+		exit(0);
+	}
+
 }
 
 void mouse_callback(int xpos, int ypos)
