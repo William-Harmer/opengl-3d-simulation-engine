@@ -77,7 +77,7 @@ float lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
 float wheelRotationAngle = 0.0f;
-float wheelRotationSpeed = 0.1f;
+float wheelRotationSpeed = 0.5f;
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
@@ -167,7 +167,8 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
 	wheel.DrawElementsUsingVBO(myShader);
-	wheel.DrawBoundingBox(myShader);
+	//wheel.DrawBoundingBox(myShader);
+	//wheel.DrawOctreeLeaves(myShader);
 
 	cart.DrawElementsUsingVBO(myShader);
 	//cart.DrawBoundingBox(myShader);
