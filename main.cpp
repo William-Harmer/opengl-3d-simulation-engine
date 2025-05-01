@@ -37,9 +37,9 @@ COBJLoader objLoader;	//this object is used to load the 3d models.
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
 glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
-glm::mat4 objectRotation;
-glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
-glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f); //vector for the position of the object.
+//glm::mat4 objectRotation;
+//glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
+//glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f); //vector for the position of the object.
 
 //Material properties
 float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -76,10 +76,13 @@ float lastX = screenWidth / 2.0f;
 float lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
+float wheelRotationAngle = 0.0f;
+float wheelRotationSpeed = 0.1f;
+
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	//cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
+	cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
 	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -132,9 +135,9 @@ void display()
 	//	model.CalcBoundingBox()
 	//model.DrawOctreeLeaves(myBasicShader);
 
-	
-	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	//glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	//glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
@@ -146,26 +149,26 @@ void display()
 	//glm::vec3 wheelCentre(centre->x, centre->y, centre->z);
 	//std::cout << "Centre Point: (" << centre->x << ", " << centre->y << ", " << centre->z << ")" << std::endl;
 	//std::cout << "Wheel Centre: (" << wheelCentre.x << ", " << wheelCentre.y << ", " << wheelCentre.z << ")" << std::endl;
-	
+
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	wheelBase.DrawElementsUsingVBO(myShader);
 	//wheelBase.DrawBoundingBox(myShader);
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	wheel.DrawElementsUsingVBO(myShader);
-	//wheel.DrawBoundingBox(myShader);
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	// Apply the rotation transformation to the wheel
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix;
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+
+	wheel.DrawElementsUsingVBO(myShader);
+	wheel.DrawBoundingBox(myShader);
+
 	cart.DrawElementsUsingVBO(myShader);
 	//cart.DrawBoundingBox(myShader);
 
@@ -211,7 +214,7 @@ void init()
 
 	//lets initialise our object's rotation transformation 
 	//to the identity matrix
-	objectRotation = glm::mat4(1.0f);
+	//objectRotation = glm::mat4(1.0f);
 
 
 	cout << " loading model " << endl;
@@ -365,6 +368,11 @@ void mouse_callback(int xpos, int ypos)
 
 void idle()
 {
+
+	wheelRotationAngle += wheelRotationSpeed;
+	if (wheelRotationAngle >= 360.0f) {
+		wheelRotationAngle = 0.0f;
+	}
 	processKeys();
 
 	glutPostRedisplay();
