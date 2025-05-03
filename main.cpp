@@ -68,6 +68,10 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 1000.0f); // The inital position of 
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
 
+glm::vec3 cartTopPos = glm::vec3(000.0f, 776.0f, 0.0f);
+
+
+
 // Mouse control variables
 float yaw = -90.0f;  // Horizontal angle (initialized facing -Z)
 float pitch = 0.0f;  // Vertical angle
@@ -177,13 +181,21 @@ void display()
 
 	wheel.DrawElementsUsingVBO(myShader);
 
+
+	// Rotate the cart around the origin (0, 0, 0)
 	rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix;
+
+	// Apply rotation around the origin first, then translate to cart's position
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix; // Rotate around origin (0, 0, 0)
+	ModelViewMatrix = glm::translate(ModelViewMatrix, cartTopPos); // Translate the cart to its position
+
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
+	std::cout << "Cart Position: (" << cartTopPos.x << ", " << cartTopPos.y << ", " << cartTopPos.z << ")" << std::endl;
 	cart.DrawElementsUsingVBO(myShader);
+
 
 
 
