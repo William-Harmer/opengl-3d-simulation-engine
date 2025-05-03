@@ -29,8 +29,7 @@ CShader* myShader;  ///shader object
 float amount = 0;
 float temp = 0.002f;
 
-CThreeDModel wheelBase, wheel, cart;
-CThreeDModel model; //A threeDModel object is needed for each model loaded
+CThreeDModel wheelBase, wheel, cart, theFloor; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
 
@@ -76,13 +75,17 @@ float lastX = screenWidth / 2.0f;
 float lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
+float cameraSpeed = 0.75f; // You can adjust the movement speed
+
 float wheelRotationAngle = 0.0f;
-float wheelRotationSpeed = 0.5f;
+float wheelRotationSpeed = 0.025f;
+
+
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
+	//cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
 	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -150,9 +153,15 @@ void display()
 	//std::cout << "Centre Point: (" << centre->x << ", " << centre->y << ", " << centre->z << ")" << std::endl;
 	//std::cout << "Wheel Centre: (" << wheelCentre.x << ", " << wheelCentre.y << ", " << wheelCentre.z << ")" << std::endl;
 
-
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	theFloor.DrawElementsUsingVBO(myShader);
+
+
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	wheelBase.DrawElementsUsingVBO(myShader);
@@ -167,11 +176,16 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
 	wheel.DrawElementsUsingVBO(myShader);
-	//wheel.DrawBoundingBox(myShader);
-	//wheel.DrawOctreeLeaves(myShader);
+
+	rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix;
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
 	cart.DrawElementsUsingVBO(myShader);
-	//cart.DrawBoundingBox(myShader);
+
+
 
 	glFlush();
 	glutSwapBuffers();
@@ -185,7 +199,7 @@ void reshape(int width, int height)		// Resize the OpenGL window
 	glViewport(0, 0, width, height);						// Reset The Current Viewport
 
 	//Set the projection matrix
-	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 2000.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 4000.0f);
 }
 void init()
 {
@@ -219,12 +233,12 @@ void init()
 
 
 	cout << " loading model " << endl;
-	if (objLoader.LoadModel("TestModels/axes.obj"))//returns true if the model is loaded
+	if (objLoader.LoadModel("TestModels/floor.obj"))//returns true if the model is loaded
 	{
 		cout << " model loaded " << endl;
 
 		//copy data from the OBJLoader object to the threedmodel class
-		model.ConstructModelFromOBJLoader(objLoader);
+		theFloor.ConstructModelFromOBJLoader(objLoader);
 
 
 
@@ -235,7 +249,7 @@ void init()
 		model.CentreOnZero();*/
 
 
-		model.InitVBO(myShader);
+		theFloor.InitVBO(myShader);
 	}
 	else
 	{
@@ -297,8 +311,6 @@ void processKeys()
 	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));  // right vector
 	glm::vec3 up = cameraUp;  // camera's up vector (for flying)
 
-	float cameraSpeed = 0.05f; // You can adjust the movement speed
-
 	// WASD movement
 	if (keyState['w']) {
 		cameraPos += forward * cameraSpeed;
@@ -331,6 +343,20 @@ void processKeys()
 	if (keyState[27]) // Escape
 	{
 		exit(0);
+	}
+
+	if (keyState['q']) {
+		wheelRotationAngle += wheelRotationSpeed;
+	}
+	if (keyState['e']) {
+		wheelRotationAngle -= wheelRotationSpeed;
+	}
+
+	if (wheelRotationAngle >= 360.0f) {
+		wheelRotationAngle -= 360.0f;
+	}
+	if (wheelRotationAngle < 0.0f) {
+		wheelRotationAngle += 360.0f;
 	}
 
 }
@@ -375,11 +401,6 @@ void mouse_callback(int xpos, int ypos)
 
 void idle()
 {
-
-	wheelRotationAngle += wheelRotationSpeed;
-	if (wheelRotationAngle >= 360.0f) {
-		wheelRotationAngle = 0.0f;
-	}
 	processKeys();
 
 	glutPostRedisplay();
