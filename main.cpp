@@ -181,31 +181,32 @@ void display()
 
 	wheel.DrawElementsUsingVBO(myShader);
 
+	// Step 1: Build the Model Matrix (Local ? World)
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f)); // Rotate around origin
+	modelMatrix = glm::translate(modelMatrix, cartTopPos); // Move cart to its position in world space
 
-	// Rotate the cart around the origin (0, 0, 0)
-	rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix; // Rotate around origin (0, 0, 0)
-	ModelViewMatrix = glm::translate(ModelViewMatrix, cartTopPos); // Translate the cart to its position
+	// Step 2: Build the Model-View Matrix (Local ? Eye)
+	glm::mat4 ModelViewMatrix = viewingMatrix * modelMatrix;
 
+	// Step 3: Compute and upload Normal Matrix
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	// Step 4: Upload Model-View Matrix to shader
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
-	// Define the local position of the point you want to track
-	glm::vec3 localPoint = glm::vec3(0.0f, 10.0f, 0.0f);
-	glm::vec4 localPointHomogeneous = glm::vec4(localPoint, 1.0f);
+	// Step 5: Define the local position of the point you want to track
+	glm::vec4 localPoint = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f);
 
-	// Transform the local point to world space
-	glm::vec3 worldPoint = glm::vec3(ModelViewMatrix * localPointHomogeneous);
+	// Step 6: Transform to world space (Model Matrix only)
+	glm::vec3 worldPoint = glm::vec3(modelMatrix * localPoint);
 
-	// Print the world position to the console
+	// Step 8: Print the world position
 	std::cout << "World Position of Cart Point: (" << worldPoint.x << ", " << worldPoint.y << ", " << worldPoint.z << ")" << std::endl;
 
-	//std::cout << "Cart Position: (" << cartTopPos.x << ", " << cartTopPos.y << ", " << cartTopPos.z << ")" << std::endl;
+	// Step 9: Draw the object
 	cart.DrawElementsUsingVBO(myShader);
-
-
-
 
 	glFlush();
 	glutSwapBuffers();
