@@ -184,8 +184,6 @@ void display()
 
 	// Rotate the cart around the origin (0, 0, 0)
 	rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
-
-	// Apply rotation around the origin first, then translate to cart's position
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix; // Rotate around origin (0, 0, 0)
 	ModelViewMatrix = glm::translate(ModelViewMatrix, cartTopPos); // Translate the cart to its position
 
@@ -193,7 +191,17 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
-	std::cout << "Cart Position: (" << cartTopPos.x << ", " << cartTopPos.y << ", " << cartTopPos.z << ")" << std::endl;
+	// Define the local position of the point you want to track
+	glm::vec3 localPoint = glm::vec3(0.0f, 10.0f, 0.0f);
+	glm::vec4 localPointHomogeneous = glm::vec4(localPoint, 1.0f);
+
+	// Transform the local point to world space
+	glm::vec3 worldPoint = glm::vec3(ModelViewMatrix * localPointHomogeneous);
+
+	// Print the world position to the console
+	std::cout << "World Position of Cart Point: (" << worldPoint.x << ", " << worldPoint.y << ", " << worldPoint.z << ")" << std::endl;
+
+	//std::cout << "Cart Position: (" << cartTopPos.x << ", " << cartTopPos.y << ", " << cartTopPos.z << ")" << std::endl;
 	cart.DrawElementsUsingVBO(myShader);
 
 
