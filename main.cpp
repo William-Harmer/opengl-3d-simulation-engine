@@ -24,7 +24,7 @@ CShader* myShader;
 #include "Obj/OBJLoader.h"
 
 // Existing models
-CThreeDModel wheelBase, wheel, cart, theFloor;
+CThreeDModel cart, theFloor;
 // Individual new models
 CThreeDModel centerstar, bottompart, centerblock;
 CThreeDModel wheelringfront1, wheelringfront2;
@@ -148,15 +148,6 @@ void display()
 		theFloor.DrawElementsUsingVBO(myShader);
 	}
 
-	// --- Draw wheel base ---
-	{
-		glm::mat4 mv = view * glm::mat4(1.0f);
-		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
-		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
-		wheelBase.DrawElementsUsingVBO(myShader);
-	}
-
 	// --- Build a single wheel?rotation matrix ---
 	glm::mat4 rotationMatrix = glm::rotate(
 		glm::mat4(1.0f),
@@ -203,12 +194,12 @@ void display()
 	// 3) Transform the world?space point into that model?space:
 	glm::vec3 localCam = glm::vec3(invModel * glm::vec4(cameraPos, 1.0f));
 
-	// 4) Test against the leaf?octree in model?space:
-	if ( wheelringfront1.IsPointInLeaf(localCam.x, localCam.y, localCam.z) ) {
-		std::cout << "touching\n";
-	} else {
-		std::cout << "Not touching\n";
-	}
+	//// 4) Test against the leaf?octree in model?space:
+	//if ( wheelringfront1.IsPointInLeaf(localCam.x, localCam.y, localCam.z) ) {
+	//	std::cout << "touching\n";
+	//} else {
+	//	std::cout << "Not touching\n";
+	//}
 
 
 
@@ -288,7 +279,6 @@ void display()
 	glutSwapBuffers();
 }
 
-
 void reshape(int width, int height)		// Resize the OpenGL window
 {
 	screenWidth = width; screenHeight = height;           // to ensure the mouse coordinates match 
@@ -317,12 +307,6 @@ void init()
 	// Floor
 	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
 	else cout << " model failed to load floor" << endl;
-	// Wheel base
-	if (objLoader.LoadModel("TestModels/wheelbase.obj")) { wheelBase.ConstructModelFromOBJLoader(objLoader); wheelBase.InitVBO(myShader); }
-	else cout << " model failed to load wheelbase" << endl;
-	// Wheel
-	if (objLoader.LoadModel("TestModels/wheel.obj")) { wheel.ConstructModelFromOBJLoader(objLoader); wheel.InitVBO(myShader); }
-	else cout << " model failed to load wheel" << endl;
 	// Cart
 	if (objLoader.LoadModel("TestModels/cart.obj")) { cart.ConstructModelFromOBJLoader(objLoader); cart.InitVBO(myShader); }
 	else cout << " model failed to load cart" << endl;
@@ -406,61 +390,93 @@ void specialUp(int key, int x, int y)
 {
 }
 
-void processKeys()
-{
-	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);  // forward vector
-	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));  // right vector
-	glm::vec3 up = cameraUp;  // camera's up vector (for flying)
+// returns true if worldPos is inside *any* of your meshes
+bool CheckCollision(const glm::vec3& worldPos) {
 
-	// WASD movement
-	if (keyState['w']) {
-		cameraPos += forward * cameraSpeed;
-		cameraTarget += forward * cameraSpeed;
-	}
-	if (keyState['s']) {
-		cameraPos -= forward * cameraSpeed;
-		cameraTarget -= forward * cameraSpeed;
-	}
-	if (keyState['a']) {
-		cameraPos -= right * cameraSpeed;
-		cameraTarget -= right * cameraSpeed;
-	}
-	if (keyState['d']) {
-		cameraPos += right * cameraSpeed;
-		cameraTarget += right * cameraSpeed;
-	}
 
-	if (keyState[32]) {  // 32 is ASCII for space
-		cameraPos += up * cameraSpeed;
-		cameraTarget += up * cameraSpeed;
-	}
+	// 1) prepare the inverted rotation for all the wheel’s spinning parts
+	glm::mat4 rotM = glm::rotate(glm::mat4(1.0f),
+		glm::radians(wheelRotationAngle),
+		glm::vec3(0, 0, 1));
+	glm::mat4 invRotM = glm::inverse(rotM);
 
-	// Flying down (Shift key)
-	if (keyState['z']) {
-		cameraPos -= up * cameraSpeed;
-		cameraTarget -= up * cameraSpeed;
-	}
+	// 2) prepare the inverted translation for the cart
+	glm::mat4 cartM = glm::translate(glm::mat4(1.0f), cartTopPos);
+	glm::mat4 invCartM = glm::inverse(cartM);
 
-	if (keyState[27]) // Escape
+	// --- A) static geometry (identity transform) ---
+	for (auto m : { &theFloor, &bottompart, &centerblock,
+					&stand1, &stand2, &stand3, &stand4 })
 	{
-		exit(0);
+		// model?space == world?space here
+		if (m->IsPointInLeaf(worldPos.x, worldPos.y, worldPos.z))
+			return true;
 	}
 
-	if (keyState['q']) {
-		wheelRotationAngle += wheelRotationSpeed;
-	}
-	if (keyState['e']) {
-		wheelRotationAngle -= wheelRotationSpeed;
+	// --- B) rotating wheel pieces ---
+	for (auto m : {
+		&wheelringfront1, &wheelringfront2,
+		&wheelline1,  &wheelline2,  &wheelline3,  &wheelline4,
+		&wheelline5,  &wheelline6,  &wheelline7,  &wheelline8,
+		&wheelline9,  &wheelline10, &wheelline11, &wheelline12,
+		&wheelline13, &wheelline14, &wheelline15, &wheelline16,
+		&wheelline17, &wheelline18, &wheelline19, &wheelline20,
+		&wheelline21, &wheelline22, &wheelline23, &wheelline24,
+		&wheelline25, &wheelline26, &wheelline27, &wheelline28,
+		&wheelline29, &wheelline30, &wheelline31, &wheelline32,
+		&innerwheelring1, &innerwheelring2,
+		&innerrect1,  &innerrect2,  &innerrect3,  &innerrect4,
+		&innerrect5,  &innerrect6,  &innerrect7,  &innerrect8,
+		&innerrect9,  &innerrect10, &innerrect11, &innerrect12,
+		&innerrect13, &innerrect14, &innerrect15, &innerrect16,
+		&centerstar
+		})
+	{
+		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
+		if (m->IsPointInLeaf(local.x, local.y, local.z))
+			return true;
 	}
 
-	if (wheelRotationAngle >= 360.0f) {
-		wheelRotationAngle -= 360.0f;
-	}
-	if (wheelRotationAngle < 0.0f) {
-		wheelRotationAngle += 360.0f;
+	// --- C) the cart (translation only) ---
+	{
+		glm::vec3 local = glm::vec3(invCartM * glm::vec4(worldPos, 1.0f));
+		if (cart.IsPointInLeaf(local.x, local.y, local.z))
+			return true;
 	}
 
+	return false;
 }
+
+void processKeys() {
+	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
+	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+	glm::vec3 up = cameraUp;
+
+	// helper: only commit the move if it doesn’t collide
+	auto tryMove = [&](const glm::vec3& delta) {
+		glm::vec3 np = cameraPos + delta;
+		if (!CheckCollision(np)) {
+			cameraPos = np;
+			cameraTarget = cameraTarget + delta;
+		}
+		};
+
+	if (keyState['w']) tryMove(forward * cameraSpeed);
+	if (keyState['s']) tryMove(-forward * cameraSpeed);
+	if (keyState['a']) tryMove(-right * cameraSpeed);
+	if (keyState['d']) tryMove(right * cameraSpeed);
+	if (keyState[32])  tryMove(up * cameraSpeed); // space
+	if (keyState['z']) tryMove(-up * cameraSpeed); // fly down
+
+	if (keyState[27]) exit(0);
+
+	// wheel rotation stays unchanged:
+	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed;
+	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed;
+	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f;
+	if (wheelRotationAngle < 0.0f) wheelRotationAngle += 360.0f;
+}
+
 
 void mouse_callback(int xpos, int ypos)
 {

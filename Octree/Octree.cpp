@@ -645,6 +645,7 @@ void COctree::CalcVertexNormals(CThreeDModel* model)
 
 bool COctree::IsPointInLeaf(double x, double y, double z) const
 {
+
 	// 1) If the point is outside this node’s AABB at all, it can’t be in any leaf here.
 	if (x < m_dMinX || x > m_dMaxX ||
 		y < m_dMinY || y > m_dMaxY ||

@@ -243,6 +243,11 @@ void CThreeDModel::ConstructModelFromOBJLoader(COBJLoader& refOBJLoader)
  */
 void CThreeDModel::ConstructOctree()
 {
+	if (m_pvVertices == nullptr || m_iNumberOfVertices == 0) {
+		std::cerr << "[Octree] cannot build: no vertex data\n";
+		return;
+	}
+
 	double minX,minY,minZ,maxX,maxY,maxZ;
 	CalcBoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
 	
