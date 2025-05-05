@@ -1,36 +1,47 @@
 #include <iostream>
+#include <string>
 using namespace std;
 
-
 //--- OpenGL ---
-#include "GL\glew.h"
-#include "GL\wglew.h"
+#include "GL/glew.h"
+#include "GL/wglew.h"
 #pragma comment(lib, "glew32.lib")
 //--------------
 
-#include "glm\glm.hpp"
-#include "glm\gtc\matrix_transform.hpp"
-#include "glm\gtc\type_ptr.hpp"
-#include "glm\gtc\matrix_inverse.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
 
-#include "GL\freeglut.h"
+#include "GL/freeglut.h"
+#include "Images/FreeImage.h"
+#include "shaders/Shader.h"
 
-#include "Images\FreeImage.h"
+CShader* myShader;
 
-#include "shaders\Shader.h"
+// MODEL LOADING
+#include "3DStruct/threeDModel.h"
+#include "Obj/OBJLoader.h"
 
-CShader* myShader;  ///shader object 
-//CShader* myBasicShader;
+// Existing models
+CThreeDModel wheelBase, wheel, cart, theFloor;
+// Individual new models
+CThreeDModel centerstar, bottompart, centerblock;
+CThreeDModel wheelringfront1, wheelringfront2;
+CThreeDModel wheelline1, wheelline2, wheelline3, wheelline4, wheelline5, wheelline6, wheelline7, wheelline8;
+CThreeDModel wheelline9, wheelline10, wheelline11, wheelline12, wheelline13, wheelline14, wheelline15, wheelline16;
+CThreeDModel wheelline17, wheelline18, wheelline19, wheelline20, wheelline21, wheelline22, wheelline23, wheelline24;
+CThreeDModel wheelline25, wheelline26, wheelline27, wheelline28, wheelline29, wheelline30, wheelline31, wheelline32;
+CThreeDModel innerwheelring1, innerwheelring2;
+CThreeDModel innerrect1, innerrect2, innerrect3, innerrect4, innerrect5, innerrect6, innerrect7, innerrect8;
+CThreeDModel innerrect9, innerrect10, innerrect11, innerrect12, innerrect13, innerrect14, innerrect15, innerrect16;
+CThreeDModel stand1, stand2, stand3, stand4;
 
-//MODEL LOADING
-#include "3DStruct\threeDModel.h"
-#include "Obj\OBJLoader.h"
+COBJLoader objLoader;
 
 float amount = 0;
 float temp = 0.002f;
 
-CThreeDModel wheelBase, wheel, cart, theFloor; //A threeDModel object is needed for each model loaded
-COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
 
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
@@ -89,134 +100,113 @@ float wheelRotationSpeed = 0.025f;
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	//cout << "Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << endl;
-	//cout << "Model Position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
-
+	// Clear screen and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(myShader->GetProgramObjID());  // use the shader
+	// Use our shader
+	GLuint prog = myShader->GetProgramObjID();
+	glUseProgram(prog);
 
-	//Part for displacement shader.
+	// --- displacement uniform (if still used) ---
 	amount += temp;
-	if (amount > 1.0f || amount < -1.5f)
-		temp = -temp;
-	//amount = 0;
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "displacement"), amount);
+	if (amount > 1.0f || amount < -1.5f) temp = -temp;
+	glUniform1f(glGetUniformLocation(prog, "displacement"), amount);
 
-	//Set the projection matrix in the shader
-	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");
-	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+	// --- Projection matrix ---
+	glUniformMatrix4fv(
+		glGetUniformLocation(prog, "ProjectionMatrix"),
+		1, GL_FALSE,
+		glm::value_ptr(ProjectionMatrix)
+	);
 
-	glm::mat4 viewingMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	// --- View matrix (camera) ---
+	glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	glUniformMatrix4fv(
+		glGetUniformLocation(prog, "ViewMatrix"),
+		1, GL_FALSE,
+		glm::value_ptr(view)
+	);
 
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
+	// --- Lights ---
+	glUniform4fv(glGetUniformLocation(prog, "LightPos"), 1, LightPos);
+	glUniform4fv(glGetUniformLocation(prog, "light_ambient"), 1, Light_Ambient_And_Diffuse);
+	glUniform4fv(glGetUniformLocation(prog, "light_diffuse"), 1, Light_Ambient_And_Diffuse);
+	glUniform4fv(glGetUniformLocation(prog, "light_specular"), 1, Light_Specular);
 
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_specular"), 1, Light_Specular);
+	// --- Material ---
+	glUniform4fv(glGetUniformLocation(prog, "material_ambient"), 1, Material_Ambient);
+	glUniform4fv(glGetUniformLocation(prog, "material_diffuse"), 1, Material_Diffuse);
+	glUniform4fv(glGetUniformLocation(prog, "material_specular"), 1, Material_Specular);
+	glUniform1f(glGetUniformLocation(prog, "material_shininess"), Material_Shininess);
 
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_ambient"), 1, Material_Ambient);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_diffuse"), 1, Material_Diffuse);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
-
-	//pos.x += objectRotation[2][0]*0.0003;
-	//pos.y += objectRotation[2][1]*0.0003;
-	//pos.z += objectRotation[2][2]*0.0003;
-
-	//glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
-	//glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	//model.DrawElementsUsingVBO(myShader);
-
-	//Switch to basic shader to draw the lines for the bounding boxes
-	//glUseProgram(myBasicShader->GetProgramObjID());
-	//projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
-	//glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-	//glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	//model.DrawAllBoxesForOctreeNodes(myBasicShader);
-	//model.DrawBoundingBox(myBasicShader);
-	//	model.CalcBoundingBox()
-	//model.DrawOctreeLeaves(myBasicShader);
-
-
-	//glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	//glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
-	//switch back to the shader for textures and lighting on the objects.
-	glUseProgram(myShader->GetProgramObjID());  // use the shader
-
-	// Ok so calculating the centre point is only in its local space
-	// But we know if we do 0,0,0 that the objects are being centered.
-	// But if the objects are centeres why is the cart not going to the middle?
-	//Vector3d* centre = wheel.GetCentrePoint();
-	//glm::vec3 wheelCentre(centre->x, centre->y, centre->z);
-	//std::cout << "Centre Point: (" << centre->x << ", " << centre->y << ", " << centre->z << ")" << std::endl;
-	//std::cout << "Wheel Centre: (" << wheelCentre.x << ", " << wheelCentre.y << ", " << wheelCentre.z << ")" << std::endl;
-
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	theFloor.DrawElementsUsingVBO(myShader);
-
-
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	wheelBase.DrawElementsUsingVBO(myShader);
-	//wheelBase.DrawBoundingBox(myShader);
-
-
-	// Apply the rotation transformation to the wheel
-	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f));
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0)) * rotationMatrix;
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	wheel.DrawOctreeLeaves(myShader);
-	wheel.DrawElementsUsingVBO(myShader);
-
-	// Step 1: Build the Model Matrix (Local ? World)
-	glm::mat4 modelMatrix = glm::mat4(1.0f);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(wheelRotationAngle), glm::vec3(0.0f, 0.0f, 1.0f)); // Rotate around origin
-	modelMatrix = glm::translate(modelMatrix, cartTopPos); // Move cart to its position in world space
-
-	// Step 2: Build the Model-View Matrix (Local ? Eye)
-	glm::mat4 ModelViewMatrix = viewingMatrix * modelMatrix;
-
-	// Step 3: Compute and upload Normal Matrix
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
-	// Step 4: Upload Model-View Matrix to shader
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	// Step 5: Define the local position of the point you want to track
-	glm::vec4 localPoint = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f);
-
-	// Step 6: Transform to world space (Model Matrix only)
-	glm::vec3 worldPoint = glm::vec3(modelMatrix * localPoint);
-
-	// Step 8: Print the world position
-	std::cout << "World Position of Cart Point: (" << worldPoint.x << ", " << worldPoint.y << ", " << worldPoint.z << ")" << std::endl;
-
-	// Step 9: Draw the object
-	cart.DrawElementsUsingVBO(myShader);
-
-	// ** collision check **
-	if (wheel.IsPointInLeaf(cameraPos.x, cameraPos.y, cameraPos.z)) {
-		std::cout << "touching" << std::endl;
+	// --- Draw floor ---
+	{
+		glm::mat4 mv = view * glm::mat4(1.0f);
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		theFloor.DrawElementsUsingVBO(myShader);
 	}
 
+	// --- Draw wheel base ---
+	{
+		glm::mat4 mv = view * glm::mat4(1.0f);
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		wheelBase.DrawElementsUsingVBO(myShader);
+	}
+
+	// --- Build a single wheel?rotation matrix ---
+	glm::mat4 rotationMatrix = glm::rotate(
+		glm::mat4(1.0f),
+		glm::radians(wheelRotationAngle),
+		glm::vec3(0.0f, 0.0f, 1.0f)
+	);
+
+	// --- Helper to draw any part with that rotation ---
+	auto drawRot = [&](CThreeDModel& m) {
+		glm::mat4 mv = view * rotationMatrix;
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		m.DrawElementsUsingVBO(myShader);
+		};
+
+	// --- Draw each rotating piece individually ---
+	drawRot(wheelringfront1);
+	drawRot(wheelringfront2);
+	drawRot(wheelline1);   drawRot(wheelline2);   drawRot(wheelline3);   drawRot(wheelline4);
+	drawRot(wheelline5);   drawRot(wheelline6);   drawRot(wheelline7);   drawRot(wheelline8);
+	drawRot(wheelline9);   drawRot(wheelline10);  drawRot(wheelline11);  drawRot(wheelline12);
+	drawRot(wheelline13);  drawRot(wheelline14);  drawRot(wheelline15);  drawRot(wheelline16);
+	drawRot(wheelline17);  drawRot(wheelline18);  drawRot(wheelline19);  drawRot(wheelline20);
+	drawRot(wheelline21);  drawRot(wheelline22);  drawRot(wheelline23);  drawRot(wheelline24);
+	drawRot(wheelline25);  drawRot(wheelline26);  drawRot(wheelline27);  drawRot(wheelline28);
+	drawRot(wheelline29);  drawRot(wheelline30);  drawRot(wheelline31);  drawRot(wheelline32);
+	drawRot(innerwheelring1);
+	drawRot(innerwheelring2);
+	drawRot(innerrect1);   drawRot(innerrect2);   drawRot(innerrect3);   drawRot(innerrect4);
+	drawRot(innerrect5);   drawRot(innerrect6);   drawRot(innerrect7);   drawRot(innerrect8);
+	drawRot(innerrect9);   drawRot(innerrect10);  drawRot(innerrect11);  drawRot(innerrect12);
+	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
+	drawRot(centerstar);
+
+	// --- Finally, draw the cart with its translation only ---
+	{
+		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), cartTopPos);
+		glm::mat4 mv = view * modelCart;
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		cart.DrawElementsUsingVBO(myShader);
+	}
+
+	// Flush and swap
 	glFlush();
 	glutSwapBuffers();
 }
+
 
 void reshape(int width, int height)		// Resize the OpenGL window
 {
@@ -228,90 +218,93 @@ void reshape(int width, int height)		// Resize the OpenGL window
 	//Set the projection matrix
 	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 4000.0f);
 }
+
 void init()
 {
-	glClearColor(1.0, 1.0, 1.0, 0.0);						//sets the clear colour to yellow
-	//glClear(GL_COLOR_BUFFER_BIT) in the display function
-	//will clear the buffer to this colour
+	glClearColor(1.0, 1.0, 1.0, 0.0);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
-
 
 	myShader = new CShader();
-	//if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformationsWithDisplacement.vert", "glslfiles/basicTransformationsWithDisplacement.frag"))
 	if (!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
-	{
 		cout << "failed to load shader" << endl;
-	}
 
-	//myBasicShader = new CShader();
-	//if (!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
-	//{
-	//	cout << "failed to load shader" << endl;
-	//}
-
-	glUseProgram(myShader->GetProgramObjID());  // use the shader
-
+	glUseProgram(myShader->GetProgramObjID());
 	glEnable(GL_TEXTURE_2D);
 
-	//lets initialise our object's rotation transformation 
-	//to the identity matrix
-	//objectRotation = glm::mat4(1.0f);
+	cout << " loading models " << endl;
 
+	// Floor
+	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
+	else cout << " model failed to load floor" << endl;
+	// Wheel base
+	if (objLoader.LoadModel("TestModels/wheelbase.obj")) { wheelBase.ConstructModelFromOBJLoader(objLoader); wheelBase.InitVBO(myShader); }
+	else cout << " model failed to load wheelbase" << endl;
+	// Wheel
+	if (objLoader.LoadModel("TestModels/wheel.obj")) { wheel.ConstructModelFromOBJLoader(objLoader); wheel.InitVBO(myShader); }
+	else cout << " model failed to load wheel" << endl;
+	// Cart
+	if (objLoader.LoadModel("TestModels/cart.obj")) { cart.ConstructModelFromOBJLoader(objLoader); cart.InitVBO(myShader); }
+	else cout << " model failed to load cart" << endl;
 
-	cout << " loading model " << endl;
-	if (objLoader.LoadModel("TestModels/floor.obj"))//returns true if the model is loaded
-	{
-		cout << " model loaded " << endl;
+	// Centerstar
+	if (objLoader.LoadModel("TestModels/Centerstar.obj")) { centerstar.ConstructModelFromOBJLoader(objLoader); centerstar.InitVBO(myShader); }
+	else cout << " model failed to load Centerstar" << endl;
+	// Bottompart
+	if (objLoader.LoadModel("TestModels/Bottompart.obj")) { bottompart.ConstructModelFromOBJLoader(objLoader); bottompart.InitVBO(myShader); }
+	else cout << " model failed to load Bottompart" << endl;
+	// Centerblock
+	if (objLoader.LoadModel("TestModels/Centerblock.obj")) { centerblock.ConstructModelFromOBJLoader(objLoader); centerblock.InitVBO(myShader); }
+	else cout << " model failed to load Centerblock" << endl;
 
-		//copy data from the OBJLoader object to the threedmodel class
-		theFloor.ConstructModelFromOBJLoader(objLoader);
+	// Wheelringfront1
+	if (objLoader.LoadModel("TestModels/Wheelringfront1.obj")) { wheelringfront1.ConstructModelFromOBJLoader(objLoader); wheelringfront1.InitVBO(myShader); }
+	else cout << " model failed to load Wheelringfront1" << endl;
+	// Wheelringfront2
+	if (objLoader.LoadModel("TestModels/Wheelringfront2.obj")) { wheelringfront2.ConstructModelFromOBJLoader(objLoader); wheelringfront2.InitVBO(myShader); }
+	else cout << " model failed to load Wheelringfront2" << endl;
 
+	// Wheellines 1-32
+#define LOAD_WHEEL_LINE(n) \
+        if (objLoader.LoadModel("TestModels/Wheelline" #n ".obj")) { wheelline##n.ConstructModelFromOBJLoader(objLoader); wheelline##n.InitVBO(myShader); } \
+        else cout << " model failed to load Wheelline" #n << endl;
+		LOAD_WHEEL_LINE(1)  LOAD_WHEEL_LINE(2)  LOAD_WHEEL_LINE(3)  LOAD_WHEEL_LINE(4)
+		LOAD_WHEEL_LINE(5)  LOAD_WHEEL_LINE(6)  LOAD_WHEEL_LINE(7)  LOAD_WHEEL_LINE(8)
+		LOAD_WHEEL_LINE(9)  LOAD_WHEEL_LINE(10) LOAD_WHEEL_LINE(11) LOAD_WHEEL_LINE(12)
+		LOAD_WHEEL_LINE(13) LOAD_WHEEL_LINE(14) LOAD_WHEEL_LINE(15) LOAD_WHEEL_LINE(16)
+		LOAD_WHEEL_LINE(17) LOAD_WHEEL_LINE(18) LOAD_WHEEL_LINE(19) LOAD_WHEEL_LINE(20)
+		LOAD_WHEEL_LINE(21) LOAD_WHEEL_LINE(22) LOAD_WHEEL_LINE(23) LOAD_WHEEL_LINE(24)
+		LOAD_WHEEL_LINE(25) LOAD_WHEEL_LINE(26) LOAD_WHEEL_LINE(27) LOAD_WHEEL_LINE(28)
+		LOAD_WHEEL_LINE(29) LOAD_WHEEL_LINE(30) LOAD_WHEEL_LINE(31) LOAD_WHEEL_LINE(32)
+#undef LOAD_WHEEL_LINE
 
+		// Innerwheelring1
+		if (objLoader.LoadModel("TestModels/Innerwheelring1.obj")) { innerwheelring1.ConstructModelFromOBJLoader(objLoader); innerwheelring1.InitVBO(myShader); }
+		else cout << " model failed to load Innerwheelring1" << endl;
+	// Innerwheelring2
+	if (objLoader.LoadModel("TestModels/Innerwheelring2.obj")) { innerwheelring2.ConstructModelFromOBJLoader(objLoader); innerwheelring2.InitVBO(myShader); }
+	else cout << " model failed to load Innerwheelring2" << endl;
 
-		//if you want to translate the object to the origin of the screen,
-		//first calculate the centre of the object, then move all the vertices
-		//back so that the centre is on the origin.
-		/*model.CalcCentrePoint();
-		model.CentreOnZero();*/
+	// Innerrect 1-16
+#define LOAD_INNER_RECT(n) \
+        if (objLoader.LoadModel("TestModels/Innerrect" #n ".obj")) { innerrect##n.ConstructModelFromOBJLoader(objLoader); innerrect##n.InitVBO(myShader); } \
+        else cout << " model failed to load Innerrect" #n << endl;
+	LOAD_INNER_RECT(1)  LOAD_INNER_RECT(2)  LOAD_INNER_RECT(3)  LOAD_INNER_RECT(4)
+		LOAD_INNER_RECT(5)  LOAD_INNER_RECT(6)  LOAD_INNER_RECT(7)  LOAD_INNER_RECT(8)
+		LOAD_INNER_RECT(9)  LOAD_INNER_RECT(10) LOAD_INNER_RECT(11) LOAD_INNER_RECT(12)
+		LOAD_INNER_RECT(13) LOAD_INNER_RECT(14) LOAD_INNER_RECT(15) LOAD_INNER_RECT(16)
+#undef LOAD_INNER_RECT
 
+		// Stands 1-4
+		if (objLoader.LoadModel("TestModels/Stand1.obj")) { stand1.ConstructModelFromOBJLoader(objLoader); stand1.InitVBO(myShader); }
+		else cout << " model failed to load Stand1" << endl;
+	if (objLoader.LoadModel("TestModels/Stand2.obj")) { stand2.ConstructModelFromOBJLoader(objLoader); stand2.InitVBO(myShader); }
+	else cout << " model failed to load Stand2" << endl;
+	if (objLoader.LoadModel("TestModels/Stand3.obj")) { stand3.ConstructModelFromOBJLoader(objLoader); stand3.InitVBO(myShader); }
+	else cout << " model failed to load Stand3" << endl;
+	if (objLoader.LoadModel("TestModels/Stand4.obj")) { stand4.ConstructModelFromOBJLoader(objLoader); stand4.InitVBO(myShader); }
+	else cout << " model failed to load Stand4" << endl;
 
-		theFloor.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
-
-	if (objLoader.LoadModel("TestModels/wheelbase.obj"))//returns true if the model is loaded
-	{
-		wheelBase.ConstructModelFromOBJLoader(objLoader);
-		wheelBase.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
-	if (objLoader.LoadModel("TestModels/wheel.obj"))//returns true if the model is loaded
-	{
-		wheel.ConstructModelFromOBJLoader(objLoader);
-		wheel.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
-	if (objLoader.LoadModel("TestModels/cart.obj"))//returns true if the model is loaded
-	{
-		cart.ConstructModelFromOBJLoader(objLoader);
-		cart.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
 	glutSetCursor(GLUT_CURSOR_NONE);
-
 }
 
 void keyboard(unsigned char key, int x, int y)

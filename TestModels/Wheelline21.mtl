@@ -1,5 +1,5 @@
 # 3ds Max Wavefront OBJ Exporter v0.99 - (c)2007 guruware
-# File Created: 05.05.2025 12:27:06
+# File Created: 05.05.2025 12:27:38
 
 newmtl build_gen_1
 	Kd 0.8000 0.8000 0.8000
@@ -15,7 +15,7 @@ newmtl build_gen_1
 	Ke 0.0000 0.0000 0.0000
 	illum 2
 
-newmtl decals_ferris_wheel
+newmtl build_gen_2
 	Kd 0.8000 0.8000 0.8000
 	Ks 0.8000 0.8000 0.8000
 	Tr 0.0000
