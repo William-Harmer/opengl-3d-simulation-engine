@@ -192,6 +192,60 @@ void display()
 	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
 	drawRot(centerstar);
 
+	// --- Draw bottompart (static) ---
+	{
+		glm::mat4 mv = view * glm::mat4(1.0f);
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(
+			glGetUniformLocation(prog, "NormalMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(nm)
+		);
+		glUniformMatrix4fv(
+			glGetUniformLocation(prog, "ModelViewMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(mv)
+		);
+		bottompart.DrawElementsUsingVBO(myShader);
+	}
+
+	// --- Draw centerblock (static) ---
+	{
+		glm::mat4 mv = view * glm::mat4(1.0f);
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(
+			glGetUniformLocation(prog, "NormalMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(nm)
+		);
+		glUniformMatrix4fv(
+			glGetUniformLocation(prog, "ModelViewMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(mv)
+		);
+		centerblock.DrawElementsUsingVBO(myShader);
+	}
+
+	// --- Draw stands 1–4 (static) ---
+	{
+		glm::mat4 mv = view * glm::mat4(1.0f);
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+		glUniformMatrix3fv(
+			glGetUniformLocation(prog, "NormalMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(nm)
+		);
+		glUniformMatrix4fv(
+			glGetUniformLocation(prog, "ModelViewMatrix"),
+			1, GL_FALSE,
+			glm::value_ptr(mv)
+		);
+		stand1.DrawElementsUsingVBO(myShader);
+		stand2.DrawElementsUsingVBO(myShader);
+		stand3.DrawElementsUsingVBO(myShader);
+		stand4.DrawElementsUsingVBO(myShader);
+	}
+
 	// --- Finally, draw the cart with its translation only ---
 	{
 		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), cartTopPos);
@@ -295,8 +349,8 @@ void init()
 #undef LOAD_INNER_RECT
 
 		// Stands 1-4
-		if (objLoader.LoadModel("TestModels/Stand1.obj")) { stand1.ConstructModelFromOBJLoader(objLoader); stand1.InitVBO(myShader); }
-		else cout << " model failed to load Stand1" << endl;
+	if (objLoader.LoadModel("TestModels/Stand1.obj")) { stand1.ConstructModelFromOBJLoader(objLoader); stand1.InitVBO(myShader); }
+	else cout << " model failed to load Stand1" << endl;
 	if (objLoader.LoadModel("TestModels/Stand2.obj")) { stand2.ConstructModelFromOBJLoader(objLoader); stand2.InitVBO(myShader); }
 	else cout << " model failed to load Stand2" << endl;
 	if (objLoader.LoadModel("TestModels/Stand3.obj")) { stand3.ConstructModelFromOBJLoader(objLoader); stand3.InitVBO(myShader); }
