@@ -192,6 +192,32 @@ void display()
 	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
 	drawRot(centerstar);
 
+		// 1) Build the same model?matrix you used to draw the part:
+	glm::mat4 modelMatrix = rotationMatrix; 
+	//    (if you had a translation or scale too, e.g. 
+	//     glm::mat4 modelMatrix = translateMatrix * rotationMatrix * scaleMatrix; )
+
+	// 2) Invert it so we can move the camera?position into model?space:
+	glm::mat4 invModel = glm::inverse(modelMatrix);
+
+	// 3) Transform the world?space point into that model?space:
+	glm::vec3 localCam = glm::vec3(invModel * glm::vec4(cameraPos, 1.0f));
+
+	// 4) Test against the leaf?octree in model?space:
+	if ( wheelringfront1.IsPointInLeaf(localCam.x, localCam.y, localCam.z) ) {
+		std::cout << "touching\n";
+	} else {
+		std::cout << "Not touching\n";
+	}
+
+
+
+	//centerstar.DrawOctreeLeaves(myShader);
+	wheelringfront1.DrawOctreeLeaves(myShader);
+	//wheelringfront1.DrawOctreeLeaves(myShader);
+	//wheelringfront2.DrawOctreeLeaves(myShader);
+	//innerwheelring1.DrawOctreeLeaves(myShader);
+
 	// --- Draw bottompart (static) ---
 	{
 		glm::mat4 mv = view * glm::mat4(1.0f);
@@ -224,6 +250,7 @@ void display()
 			glm::value_ptr(mv)
 		);
 		centerblock.DrawElementsUsingVBO(myShader);
+		centerblock.DrawOctreeLeaves(myShader);
 	}
 
 	// --- Draw stands 1–4 (static) ---
