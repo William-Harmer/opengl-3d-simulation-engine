@@ -179,6 +179,7 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
+	wheel.DrawOctreeLeaves(myShader);
 	wheel.DrawElementsUsingVBO(myShader);
 
 	// Step 1: Build the Model Matrix (Local ? World)
@@ -207,6 +208,11 @@ void display()
 
 	// Step 9: Draw the object
 	cart.DrawElementsUsingVBO(myShader);
+
+	// ** collision check **
+	if (wheel.IsPointInLeaf(cameraPos.x, cameraPos.y, cameraPos.z)) {
+		std::cout << "touching" << std::endl;
+	}
 
 	glFlush();
 	glutSwapBuffers();

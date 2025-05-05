@@ -642,3 +642,33 @@ void COctree::CalcVertexNormals(CThreeDModel* model)
 		}
 	}
 }
+
+bool COctree::IsPointInLeaf(double x, double y, double z) const
+{
+	// 1) If the point is outside this node’s AABB at all, it can’t be in any leaf here.
+	if (x < m_dMinX || x > m_dMaxX ||
+		y < m_dMinY || y > m_dMaxY ||
+		z < m_dMinZ || z > m_dMaxZ)
+		return false;
+
+	// 2) If this node is a leaf, and the point is inside its AABB, we’ve found it.
+	if (m_iLevel >= MAX_DEPTH)
+		return true;
+
+	// 3) Otherwise, figure out which child?octant the point falls into.
+	double midX = (m_dMinX + m_dMaxX) * 0.5;
+	double midY = (m_dMinY + m_dMaxY) * 0.5;
+	double midZ = (m_dMinZ + m_dMaxZ) * 0.5;
+
+	// Child index bit?packing: bit2 = x ? midX, bit1 = y ? midY, bit0 = z ? midZ
+	int idx = (x >= midX ? 4 : 0)
+		| (y >= midY ? 2 : 0)
+		| (z >= midZ ? 1 : 0);
+
+	// 4) If that child exists, recurse; otherwise the point doesn’t lie in any filled leaf.
+	if (m_pobChildren[idx])
+		return m_pobChildren[idx]->IsPointInLeaf(x, y, z);
+
+	return false;
+}
+

@@ -41,6 +41,7 @@ public:
 	void			SetUpRootFrom3DModel(int L, double x, double y, double z, double X, double Y, double Z, CThreeDModel* model);
 	void			CreateChildren(std::vector<COctree*>& stackOctree, CThreeDModel* model);
 	void			CalcVertexNormals(CThreeDModel* model);
+	bool IsPointInLeaf(double x, double y, double z) const;
 	void			DrawBoundingBox(CShader* myShader);
 	void			DrawAllBoxes(CShader* myShader);
 	void			DrawOctreeLeaves(CShader* myShader);

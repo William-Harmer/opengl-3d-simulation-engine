@@ -855,6 +855,7 @@ void CThreeDModel::DrawOctreeLeaves(CShader* shader)
  *
  *	Returns	: void
  */
+
 void CThreeDModel::DeleteVertexFaceData()
 {
 	delete[] m_pvVertices;
@@ -868,4 +869,14 @@ void CThreeDModel::DeleteVertexFaceData()
 	m_pvTexCoords = nullptr;
 	m_pobTriangles = nullptr;
 	m_pvVertNormals = nullptr;
+}
+
+bool CThreeDModel::IsPointInLeaf(double x, double y, double z)
+{
+	// make sure the octree exists
+	if (m_pobOctree == nullptr) {
+		ConstructOctree();
+	}
+	// just forward to the octree’s method
+	return m_pobOctree->IsPointInLeaf(x, y, z);
 }
