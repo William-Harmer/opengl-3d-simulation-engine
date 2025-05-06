@@ -266,11 +266,19 @@ void display()
 
 	// --- Finally, draw the cart with its translation only ---
 	{
-		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), cartTopPos);
+		// 1) Compute the cart’s rotated position around the wheel-center:
+		glm::vec3 rotatedCartPos = glm::vec3(rotationMatrix * glm::vec4(cartTopPos, 1.0f));
+
+		// 2) Only translate to that new position (no rotation applied to its orientation):
+		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), rotatedCartPos);
+
+		// 3) Build ModelView and Normal matrices as usual:
 		glm::mat4 mv = view * modelCart;
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
 		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
 		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+
+		// 4) Draw the cart:
 		cart.DrawElementsUsingVBO(myShader);
 	}
 
