@@ -204,7 +204,7 @@ void display()
 
 
 	//centerstar.DrawOctreeLeaves(myShader);
-	wheelringfront1.DrawOctreeLeaves(myShader);
+	//wheelringfront1.DrawOctreeLeaves(myShader);
 	//wheelringfront1.DrawOctreeLeaves(myShader);
 	//wheelringfront2.DrawOctreeLeaves(myShader);
 	//innerwheelring1.DrawOctreeLeaves(myShader);
@@ -241,7 +241,7 @@ void display()
 			glm::value_ptr(mv)
 		);
 		centerblock.DrawElementsUsingVBO(myShader);
-		centerblock.DrawOctreeLeaves(myShader);
+		//centerblock.DrawOctreeLeaves(myShader);
 	}
 
 	// --- Draw stands 1–4 (static) ---
