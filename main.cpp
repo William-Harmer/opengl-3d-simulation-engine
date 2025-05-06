@@ -24,7 +24,7 @@ CShader* myShader;
 #include "Obj/OBJLoader.h"
 
 // Existing models
-CThreeDModel cart, theFloor;
+CThreeDModel cart1, theFloor;
 // Individual new models
 CThreeDModel centerstar, bottompart, centerblock;
 CThreeDModel wheelringfront1, wheelringfront2;
@@ -60,7 +60,7 @@ float Material_Shininess = 50;
 //Light Properties
 float Light_Ambient_And_Diffuse[4] = { 0.8f, 0.8f, 0.6f, 1.0f };
 float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
-float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
+float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
 
 int screenWidth = 1280, screenHeight = 720;
 
@@ -96,10 +96,20 @@ float wheelRotationAngle = 0.0f;
 float wheelRotationSpeed = 0.025f;
 
 
+// Try change cart so you dont have to translate it to its position, would make a lot easier then to export all the carts
+
+
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
+	 std::cout 
+        << "cameraPos: (" 
+        << cameraPos.x << ", " 
+        << cameraPos.y << ", " 
+        << cameraPos.z << ")\n";
+
+
 	// Clear screen and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -279,7 +289,7 @@ void display()
 		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
 
 		// 4) Draw the cart:
-		cart.DrawElementsUsingVBO(myShader);
+		cart1.DrawElementsUsingVBO(myShader);
 	}
 
 	// Flush and swap
@@ -316,7 +326,7 @@ void init()
 	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
 	else cout << " model failed to load floor" << endl;
 	// Cart
-	if (objLoader.LoadModel("TestModels/cart.obj")) { cart.ConstructModelFromOBJLoader(objLoader); cart.InitVBO(myShader); }
+	if (objLoader.LoadModel("TestModels/cart.obj")) { cart1.ConstructModelFromOBJLoader(objLoader); cart1.InitVBO(myShader); }
 	else cout << " model failed to load cart" << endl;
 
 	// Centerstar
@@ -448,7 +458,7 @@ bool CheckCollision(const glm::vec3& worldPos) {
 	// --- C) the cart (translation only) ---
 	{
 		glm::vec3 local = glm::vec3(invCartM * glm::vec4(worldPos, 1.0f));
-		if (cart.IsPointInLeaf(local.x, local.y, local.z))
+		if (cart1.IsPointInLeaf(local.x, local.y, local.z))
 			return true;
 	}
 
