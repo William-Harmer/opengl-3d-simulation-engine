@@ -24,7 +24,9 @@ CShader* myShader;
 #include "Obj/OBJLoader.h"
 
 // Existing models
-CThreeDModel cart1, theFloor;
+CThreeDModel cart1, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
+
+CThreeDModel theFloor;
 // Individual new models
 CThreeDModel centerstar, bottompart, centerblock;
 CThreeDModel wheelringfront1, wheelringfront2;
@@ -96,7 +98,12 @@ float wheelRotationAngle = 0.0f;
 float wheelRotationSpeed = 0.025f;
 
 
-// Try change cart so you dont have to translate it to its position, would make a lot easier then to export all the carts
+// Hold pointers to each CThreeDModel that should orbit
+std::vector<CThreeDModel*> carts;
+// Hold each cart’s “pivot?offset” in model-space
+std::vector<glm::vec3> cartOffsets;
+
+
 
 
 
@@ -274,26 +281,28 @@ void display()
 		stand4.DrawElementsUsingVBO(myShader);
 	}
 
-	// --- Finally, draw the cart with its translation only ---
-	{
-		// Compute how far to move the mesh from its baked-in origin:
-		glm::vec3 deltaPos =
-			glm::vec3(rotationMatrix * glm::vec4(cartTopPos, 1.0f))
-			- cartTopPos;
 
-		// Apply only that translation (no rotation on the cart itself):
+	for (size_t i = 0; i < carts.size(); ++i) {
+		CThreeDModel& m = *carts[i];
+		glm::vec3  offset = cartOffsets[i];
+
+		// rotate the pivot
+		glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(offset, 1.0f));
+		// compute how far to translate from the mesh's baked-in origin
+		glm::vec3 deltaPos = rotatedPos - offset;
+
+		// build model matrix with *only* that translation
 		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), deltaPos);
 
-		// Build ModelView and Normal matrices as usual:
+		// set MV / Normal matrices
 		glm::mat4 mv = view * modelCart;
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
 		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
 		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
 
-		// Draw the cart:
-		cart1.DrawElementsUsingVBO(myShader);
+		// draw
+		m.DrawElementsUsingVBO(myShader);
 	}
-
 
 	// Flush and swap
 	glFlush();
@@ -308,7 +317,7 @@ void reshape(int width, int height)		// Resize the OpenGL window
 	glViewport(0, 0, width, height);						// Reset The Current Viewport
 
 	//Set the projection matrix
-	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 4000.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 6000.0f);
 }
 
 void init()
@@ -328,10 +337,6 @@ void init()
 	// Floor
 	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
 	else cout << " model failed to load floor" << endl;
-	// Cart
-	if (objLoader.LoadModel("TestModels/cart1.obj")) { cart1.ConstructModelFromOBJLoader(objLoader); cart1.InitVBO(myShader); }
-	else cout << " model failed to load cart" << endl;
-
 	// Centerstar
 	if (objLoader.LoadModel("TestModels/Centerstar.obj")) { centerstar.ConstructModelFromOBJLoader(objLoader); centerstar.InitVBO(myShader); }
 	else cout << " model failed to load Centerstar" << endl;
@@ -389,6 +394,136 @@ void init()
 	else cout << " model failed to load Stand3" << endl;
 	if (objLoader.LoadModel("TestModels/Stand4.obj")) { stand4.ConstructModelFromOBJLoader(objLoader); stand4.InitVBO(myShader); }
 	else cout << " model failed to load Stand4" << endl;
+
+	// load cart1
+	if (objLoader.LoadModel("TestModels/cart1.obj")) {
+		cart1.ConstructModelFromOBJLoader(objLoader);
+		cart1.InitVBO(myShader);
+
+		carts.push_back(&cart1);
+		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
+	}
+
+	// load cart2
+	if (objLoader.LoadModel("TestModels/cart2.obj")) {
+		cart2.ConstructModelFromOBJLoader(objLoader);
+		cart2.InitVBO(myShader);
+
+		carts.push_back(&cart2);
+		cartOffsets.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart3.obj")) {
+		cart3.ConstructModelFromOBJLoader(objLoader);
+		cart3.InitVBO(myShader);
+
+		carts.push_back(&cart3);
+		cartOffsets.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart4.obj")) {
+		cart4.ConstructModelFromOBJLoader(objLoader);
+		cart4.InitVBO(myShader);
+
+		carts.push_back(&cart4);
+		cartOffsets.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart5.obj")) {
+		cart5.ConstructModelFromOBJLoader(objLoader);
+		cart5.InitVBO(myShader);
+
+		carts.push_back(&cart5);
+		cartOffsets.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart6.obj")) {
+		cart6.ConstructModelFromOBJLoader(objLoader);
+		cart6.InitVBO(myShader);
+
+		carts.push_back(&cart6);
+		cartOffsets.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart7.obj")) {
+		cart7.ConstructModelFromOBJLoader(objLoader);
+		cart7.InitVBO(myShader);
+
+		carts.push_back(&cart7);
+		cartOffsets.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart8.obj")) {
+		cart8.ConstructModelFromOBJLoader(objLoader);
+		cart8.InitVBO(myShader);
+
+		carts.push_back(&cart8);
+		cartOffsets.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart9.obj")) {
+		cart9.ConstructModelFromOBJLoader(objLoader);
+		cart9.InitVBO(myShader);
+
+		carts.push_back(&cart9);
+		cartOffsets.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart10.obj")) {
+		cart10.ConstructModelFromOBJLoader(objLoader);
+		cart10.InitVBO(myShader);
+
+		carts.push_back(&cart10);
+		cartOffsets.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart11.obj")) {
+		cart11.ConstructModelFromOBJLoader(objLoader);
+		cart11.InitVBO(myShader);
+
+		carts.push_back(&cart11);
+		cartOffsets.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart12.obj")) {
+		cart12.ConstructModelFromOBJLoader(objLoader);
+		cart12.InitVBO(myShader);
+
+		carts.push_back(&cart12);
+		cartOffsets.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart13.obj")) {
+		cart13.ConstructModelFromOBJLoader(objLoader);
+		cart13.InitVBO(myShader);
+
+		carts.push_back(&cart13);
+		cartOffsets.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart14.obj")) {
+		cart14.ConstructModelFromOBJLoader(objLoader);
+		cart14.InitVBO(myShader);
+
+		carts.push_back(&cart14);
+		cartOffsets.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart15.obj")) {
+		cart15.ConstructModelFromOBJLoader(objLoader);
+		cart15.InitVBO(myShader);
+
+		carts.push_back(&cart15);
+		cartOffsets.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
+	}
+	if (objLoader.LoadModel("TestModels/cart16.obj")) {
+		cart16.ConstructModelFromOBJLoader(objLoader);
+		cart16.InitVBO(myShader);
+
+		carts.push_back(&cart16);
+		cartOffsets.push_back(glm::vec3(295.0f, 716.0f, 0.0f));
+	}
+
 
 	glutSetCursor(GLUT_CURSOR_NONE);
 }
