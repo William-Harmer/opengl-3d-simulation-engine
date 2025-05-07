@@ -276,21 +276,24 @@ void display()
 
 	// --- Finally, draw the cart with its translation only ---
 	{
-		// 1) Compute the cart’s rotated position around the wheel-center:
-		glm::vec3 rotatedCartPos = glm::vec3(rotationMatrix * glm::vec4(cartTopPos, 1.0f));
+		// Compute how far to move the mesh from its baked-in origin:
+		glm::vec3 deltaPos =
+			glm::vec3(rotationMatrix * glm::vec4(cartTopPos, 1.0f))
+			- cartTopPos;
 
-		// 2) Only translate to that new position (no rotation applied to its orientation):
-		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), rotatedCartPos);
+		// Apply only that translation (no rotation on the cart itself):
+		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), deltaPos);
 
-		// 3) Build ModelView and Normal matrices as usual:
+		// Build ModelView and Normal matrices as usual:
 		glm::mat4 mv = view * modelCart;
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
 		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
 		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
 
-		// 4) Draw the cart:
+		// Draw the cart:
 		cart1.DrawElementsUsingVBO(myShader);
 	}
+
 
 	// Flush and swap
 	glFlush();
@@ -326,7 +329,7 @@ void init()
 	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
 	else cout << " model failed to load floor" << endl;
 	// Cart
-	if (objLoader.LoadModel("TestModels/cart.obj")) { cart1.ConstructModelFromOBJLoader(objLoader); cart1.InitVBO(myShader); }
+	if (objLoader.LoadModel("TestModels/cart1.obj")) { cart1.ConstructModelFromOBJLoader(objLoader); cart1.InitVBO(myShader); }
 	else cout << " model failed to load cart" << endl;
 
 	// Centerstar
