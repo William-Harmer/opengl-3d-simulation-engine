@@ -322,7 +322,14 @@ void reshape(int width, int height)		// Resize the OpenGL window
 
 void init()
 {
-	glClearColor(1.0, 1.0, 1.0, 0.0);
+
+	float r = 125.0f / 255.0f;  // ? 0.137f
+	float g = 191.0f / 255.0f;  // ? 0.663f
+	float b = 221.0f / 255.0f;  // ? 0.839f
+	float a = 0.1f;             // same alpha
+
+	glClearColor(r, g, b, a);
+
 	glEnable(GL_DEPTH_TEST);
 
 	myShader = new CShader();
