@@ -556,43 +556,40 @@ void specialUp(int key, int x, int y)
 // returns true if worldPos is inside *any* of your meshes
 bool CheckCollision(const glm::vec3& worldPos) {
 
-
 	// 1) prepare the inverted rotation for all the wheel’s spinning parts
 	glm::mat4 rotM = glm::rotate(glm::mat4(1.0f),
 		glm::radians(wheelRotationAngle),
 		glm::vec3(0, 0, 1));
 	glm::mat4 invRotM = glm::inverse(rotM);
 
-	// 2) prepare the inverted translation for the cart
-	glm::mat4 cartM = glm::translate(glm::mat4(1.0f), cartTopPos);
-	glm::mat4 invCartM = glm::inverse(cartM);
+	// 2) prepare the inverted translation for the cart top (if you ever need it)
+	//    (we'll recompute per?cart below)
 
 	// --- A) static geometry (identity transform) ---
 	for (auto m : { &theFloor, &bottompart, &centerblock,
 					&stand1, &stand2, &stand3, &stand4 })
 	{
-		// model?space == world?space here
 		if (m->IsPointInLeaf(worldPos.x, worldPos.y, worldPos.z))
 			return true;
 	}
 
 	// --- B) rotating wheel pieces ---
 	for (auto m : {
-		&wheelringfront1, &wheelringfront2,
-		&wheelline1,  &wheelline2,  &wheelline3,  &wheelline4,
-		&wheelline5,  &wheelline6,  &wheelline7,  &wheelline8,
-		&wheelline9,  &wheelline10, &wheelline11, &wheelline12,
-		&wheelline13, &wheelline14, &wheelline15, &wheelline16,
-		&wheelline17, &wheelline18, &wheelline19, &wheelline20,
-		&wheelline21, &wheelline22, &wheelline23, &wheelline24,
-		&wheelline25, &wheelline26, &wheelline27, &wheelline28,
-		&wheelline29, &wheelline30, &wheelline31, &wheelline32,
-		&innerwheelring1, &innerwheelring2,
-		&innerrect1,  &innerrect2,  &innerrect3,  &innerrect4,
-		&innerrect5,  &innerrect6,  &innerrect7,  &innerrect8,
-		&innerrect9,  &innerrect10, &innerrect11, &innerrect12,
-		&innerrect13, &innerrect14, &innerrect15, &innerrect16,
-		&centerstar
+		&wheelringfront1,& wheelringfront2,
+		& wheelline1,& wheelline2,& wheelline3,& wheelline4,
+		& wheelline5,& wheelline6,& wheelline7,& wheelline8,
+		& wheelline9,& wheelline10,& wheelline11,& wheelline12,
+		& wheelline13,& wheelline14,& wheelline15,& wheelline16,
+		& wheelline17,& wheelline18,& wheelline19,& wheelline20,
+		& wheelline21,& wheelline22,& wheelline23,& wheelline24,
+		& wheelline25,& wheelline26,& wheelline27,& wheelline28,
+		& wheelline29,& wheelline30,& wheelline31,& wheelline32,
+		& innerwheelring1,& innerwheelring2,
+		& innerrect1,& innerrect2,& innerrect3,& innerrect4,
+		& innerrect5,& innerrect6,& innerrect7,& innerrect8,
+		& innerrect9,& innerrect10,& innerrect11,& innerrect12,
+		& innerrect13,& innerrect14,& innerrect15,& innerrect16,
+		& centerstar
 		})
 	{
 		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
@@ -600,15 +597,31 @@ bool CheckCollision(const glm::vec3& worldPos) {
 			return true;
 	}
 
-	// --- C) the cart (translation only) ---
-	{
+	// --- C) moving carts (orbiting) ---
+	// For each cart: compute the same rotation-pivot you use in display(),
+	// then invert that translation to bring worldPos into cart-model space.
+	for (size_t i = 0; i < carts.size(); ++i) {
+		CThreeDModel* cart = carts[i];
+		const glm::vec3& offset = cartOffsets[i];
+
+		// where the pivot sent this cart this frame:
+		glm::vec3 rotatedPos = glm::vec3(rotM * glm::vec4(offset, 1.0f));
+		glm::vec3 deltaPos = rotatedPos - offset;
+
+		// build and invert the cart's model?space translation:
+		glm::mat4 cartM = glm::translate(glm::mat4(1.0f), deltaPos);
+		glm::mat4 invCartM = glm::inverse(cartM);
+
+		// transform the query point into cart?local coords:
 		glm::vec3 local = glm::vec3(invCartM * glm::vec4(worldPos, 1.0f));
-		if (cart1.IsPointInLeaf(local.x, local.y, local.z))
+
+		if (cart->IsPointInLeaf(local.x, local.y, local.z))
 			return true;
 	}
 
 	return false;
 }
+
 
 void processKeys() {
 	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
