@@ -55,12 +55,12 @@ glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
 //Material properties
 float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-float Material_Diffuse[4] = { 0.8f, 0.8f, 0.5f, 1.0f };
+float Material_Diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
 float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
 float Material_Shininess = 50;
 
 //Light Properties
-float Light_Ambient_And_Diffuse[4] = { 0.8f, 0.8f, 0.6f, 1.0f };
+float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
 float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
 
@@ -110,11 +110,11 @@ std::vector<glm::vec3> cartOffsets;
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	 std::cout 
-        << "cameraPos: (" 
-        << cameraPos.x << ", " 
-        << cameraPos.y << ", " 
-        << cameraPos.z << ")\n";
+	 //std::cout 
+  //      << "cameraPos: (" 
+  //      << cameraPos.x << ", " 
+  //      << cameraPos.y << ", " 
+  //      << cameraPos.z << ")\n";
 
 
 	// Clear screen and depth buffer

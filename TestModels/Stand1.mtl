@@ -14,8 +14,8 @@ newmtl build_gen_1
 	Ni 1.5200
 	Ke 0.0000 0.0000 0.0000
 	illum 2
-	map_Ka blue.png
-	map_Kd blue.png
+	map_Ka red.png
+	map_Kd red.png
 
 newmtl build_gen_2
 	Kd 0.8000 0.8000 0.8000
@@ -30,5 +30,5 @@ newmtl build_gen_2
 	Ni 1.5200
 	Ke 0.0000 0.0000 0.0000
 	illum 2
-	map_Ka blue.png
-	map_Kd blue.png
+	map_Ka red.png
+	map_Kd red.png
