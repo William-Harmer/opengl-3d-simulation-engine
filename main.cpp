@@ -44,6 +44,14 @@ COBJLoader objLoader;
 float amount = 0;
 float temp = 0.002f;
 
+enum CameraMode {
+	FREE_CAMERA,
+	FIXED_CAMERA,
+	CART_CAMERA
+};
+
+CameraMode currentCameraMode = FREE_CAMERA;
+
 ///END MODEL LOADING
 
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
@@ -137,7 +145,30 @@ void display()
 	);
 
 	// --- View matrix (camera) ---
-	glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	glm::mat4 view;
+
+	if (currentCameraMode == FREE_CAMERA) {
+		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	}
+	else if (currentCameraMode == FIXED_CAMERA) {
+		glm::vec3 fixedPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);  // example position
+		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);        // looking at center
+		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+	}
+	else if (currentCameraMode == CART_CAMERA) {
+		glm::vec3 offset = glm::vec3(0.0f, 776.0f, 0.0f);
+		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0, 0, 1));
+		glm::vec3 worldCartPos = glm::vec3(rot * glm::vec4(offset, 1.0f));
+
+		glm::vec3 eye = worldCartPos + glm::vec3(0.0f, 50.0f, 100.0f);  // camera position behind cart
+		glm::vec3 center = worldCartPos + glm::vec3(0.0f, 0.0f, -1.0f); // look forward (adjust if needed)
+
+		view = glm::lookAt(eye, center, cameraUp);
+	}
+
+
+
+
 	glUniformMatrix4fv(
 		glGetUniformLocation(prog, "ViewMatrix"),
 		1, GL_FALSE,
@@ -537,7 +568,11 @@ void init()
 
 void keyboard(unsigned char key, int x, int y)
 {
-	keyState[key] = true;  // Set the key state to true when pressed
+	keyState[key] = true;
+
+	if (key == '1') currentCameraMode = FREE_CAMERA;
+	else if (key == '2') currentCameraMode = FIXED_CAMERA;
+	else if (key == '3') currentCameraMode = CART_CAMERA;
 }
 
 void keyboardUp(unsigned char key, int x, int y)
@@ -624,16 +659,29 @@ bool CheckCollision(const glm::vec3& worldPos) {
 
 
 void processKeys() {
+	// Always allow ESC to exit
+	if (keyState[27]) exit(0);
+
+	// Always allow wheel rotation
+	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed;
+	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed;
+	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f;
+	if (wheelRotationAngle < 0.0f) wheelRotationAngle += 360.0f;
+
+	// Block movement keys if not in free camera mode
+	if (currentCameraMode != FREE_CAMERA)
+		return;
+
+	// Movement logic (WASD, space, Z)
 	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
 	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
 	glm::vec3 up = cameraUp;
 
-	// helper: only commit the move if it doesn’t collide
 	auto tryMove = [&](const glm::vec3& delta) {
 		glm::vec3 np = cameraPos + delta;
 		if (!CheckCollision(np)) {
 			cameraPos = np;
-			cameraTarget = cameraTarget + delta;
+			cameraTarget += delta;
 		}
 		};
 
@@ -641,17 +689,10 @@ void processKeys() {
 	if (keyState['s']) tryMove(-forward * cameraSpeed);
 	if (keyState['a']) tryMove(-right * cameraSpeed);
 	if (keyState['d']) tryMove(right * cameraSpeed);
-	if (keyState[32])  tryMove(up * cameraSpeed); // space
-	if (keyState['z']) tryMove(-up * cameraSpeed); // fly down
-
-	if (keyState[27]) exit(0);
-
-	// wheel rotation stays unchanged:
-	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed;
-	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed;
-	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f;
-	if (wheelRotationAngle < 0.0f) wheelRotationAngle += 360.0f;
+	if (keyState[32])  tryMove(up * cameraSpeed);    // space
+	if (keyState['z']) tryMove(-up * cameraSpeed);   // fly down
 }
+
 
 
 void mouse_callback(int xpos, int ypos)
