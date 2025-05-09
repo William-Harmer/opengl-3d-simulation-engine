@@ -23,12 +23,18 @@ CShader* myShader;
 #include "3DStruct/threeDModel.h"
 #include "Obj/OBJLoader.h"
 
-// Existing models
+// Cart models
 CThreeDModel cart1, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
+
+// Rotating models
+CThreeDModel centerstar;
+
+// Static models
+
 
 CThreeDModel theFloor;
 // Individual new models
-CThreeDModel centerstar, bottompart, centerblock;
+CThreeDModel bottompart, centerblock;
 CThreeDModel wheelringfront1, wheelringfront2;
 CThreeDModel wheelline1, wheelline2, wheelline3, wheelline4, wheelline5, wheelline6, wheelline7, wheelline8;
 CThreeDModel wheelline9, wheelline10, wheelline11, wheelline12, wheelline13, wheelline14, wheelline15, wheelline16;
@@ -118,11 +124,11 @@ std::vector<glm::vec3> cartOffsets;
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	 //std::cout 
-  //      << "cameraPos: (" 
-  //      << cameraPos.x << ", " 
-  //      << cameraPos.y << ", " 
-  //      << cameraPos.z << ")\n";
+	 std::cout 
+        << "cameraPos: (" 
+        << cameraPos.x << ", " 
+        << cameraPos.y << ", " 
+        << cameraPos.z << ")\n";
 
 
 	// Clear screen and depth buffer
@@ -156,15 +162,26 @@ void display()
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
 	else if (currentCameraMode == CART_CAMERA) {
-		glm::vec3 offset = glm::vec3(0.0f, 776.0f, 0.0f);
-		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), glm::radians(wheelRotationAngle), glm::vec3(0, 0, 1));
-		glm::vec3 worldCartPos = glm::vec3(rot * glm::vec4(offset, 1.0f));
+		glm::vec3 cartOffset = glm::vec3(-66.15f, 714.309f, -1.7f);
 
-		glm::vec3 eye = worldCartPos + glm::vec3(0.0f, 50.0f, 100.0f);  // camera position behind cart
-		glm::vec3 center = worldCartPos + glm::vec3(0.0f, 0.0f, -1.0f); // look forward (adjust if needed)
+		// Apply same rotation as wheel
+		glm::mat4 rotMatrix = glm::rotate(glm::mat4(1.0f),
+			glm::radians(wheelRotationAngle),
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		cameraPos = glm::vec3(rotMatrix * glm::vec4(cartOffset, 1.0f));
 
-		view = glm::lookAt(eye, center, cameraUp);
+		// Recalculate direction using yaw/pitch, like in FREE_CAMERA
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraTarget = cameraPos + glm::normalize(direction);
+
+		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 	}
+
+
+
 
 
 
