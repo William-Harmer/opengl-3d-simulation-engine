@@ -50,8 +50,10 @@ float temp = 0.002f;
 
 enum CameraMode {
 	FREE_CAMERA,
+	CART_CAMERA,
 	FIXED_CAMERA,
-	CART_CAMERA
+	FIXED_CAMERA_2,
+	FIXED_CAMERA_3
 };
 
 CameraMode currentCameraMode = FREE_CAMERA;
@@ -151,8 +153,18 @@ void display()
 		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA) {
-		glm::vec3 fixedPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);  // example position
-		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);        // looking at center
+		glm::vec3 fixedPos = glm::vec3(2000.0f, 20.0f, 2000.0f);
+		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+	}
+	else if (currentCameraMode == FIXED_CAMERA_2) {
+		glm::vec3 fixedPos = glm::vec3(2000.0f, 100.0f, 2000.0f);
+		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+	}
+	else if (currentCameraMode == FIXED_CAMERA_3) {
+		glm::vec3 fixedPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);
+		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
 	else if (currentCameraMode == CART_CAMERA) {
@@ -590,8 +602,10 @@ void keyboard(unsigned char key, int x, int y)
 	keyState[key] = true;
 
 	if (key == '1') currentCameraMode = FREE_CAMERA;
-	else if (key == '2') currentCameraMode = FIXED_CAMERA;
-	else if (key == '3') currentCameraMode = CART_CAMERA;
+	else if (key == '2') currentCameraMode = CART_CAMERA;
+	else if (key == '3') currentCameraMode = FIXED_CAMERA;
+	else if (key == '4') currentCameraMode = FIXED_CAMERA_2;
+	else if (key == '5') currentCameraMode = FIXED_CAMERA_3;
 }
 
 void keyboardUp(unsigned char key, int x, int y)
