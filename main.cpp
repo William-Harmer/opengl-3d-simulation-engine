@@ -24,14 +24,12 @@ CShader* myShader;
 #include "Obj/OBJLoader.h"
 
 // Cart models
-CThreeDModel cart1, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
+CThreeDModel cart1, cart1Top, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
 
 // Rotating models
 CThreeDModel centerstar;
 
 // Static models
-
-
 CThreeDModel theFloor;
 // Individual new models
 CThreeDModel bottompart, centerblock;
@@ -460,6 +458,13 @@ void init()
 		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
 	}
 
+	if (objLoader.LoadModel("TestModels/cart1Top.obj")) {
+		cart1Top.ConstructModelFromOBJLoader(objLoader);
+		cart1Top.InitVBO(myShader);
+		carts.push_back(&cart1Top);
+		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));  // same pivot as cart1
+	}
+
 	// load cart2
 	if (objLoader.LoadModel("TestModels/cart2.obj")) {
 		cart2.ConstructModelFromOBJLoader(objLoader);
@@ -655,6 +660,7 @@ bool CheckCollision(const glm::vec3& worldPos) {
 	// then invert that translation to bring worldPos into cart-model space.
 	for (size_t i = 0; i < carts.size(); ++i) {
 		CThreeDModel* cart = carts[i];
+
 		const glm::vec3& offset = cartOffsets[i];
 
 		// where the pivot sent this cart this frame:
