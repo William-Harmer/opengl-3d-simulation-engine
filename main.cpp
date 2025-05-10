@@ -112,10 +112,10 @@ float wheelRotationAngle = 0.0f;
 float wheelRotationSpeed = 0.025f;
 
 
-// Hold pointers to each CThreeDModel that should orbit
 std::vector<CThreeDModel*> carts;
-// Hold each cart’s “pivot?offset” in model-space
 std::vector<glm::vec3> cartOffsets;
+
+glm::vec3 cartCamOffset = glm::vec3(0.0f, -100.0f, 0.0f);
 
 
 
@@ -124,11 +124,11 @@ std::vector<glm::vec3> cartOffsets;
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
-	 std::cout 
-        << "cameraPos: (" 
-        << cameraPos.x << ", " 
-        << cameraPos.y << ", " 
-        << cameraPos.z << ")\n";
+	 //std::cout 
+  //      << "cameraPos: (" 
+  //      << cameraPos.x << ", " 
+  //      << cameraPos.y << ", " 
+  //      << cameraPos.z << ")\n";
 
 
 	// Clear screen and depth buffer
@@ -162,28 +162,29 @@ void display()
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
 	else if (currentCameraMode == CART_CAMERA) {
-		glm::vec3 cartOffset = glm::vec3(-66.15f, 714.309f, -1.7f);
-
-		// Apply same rotation as wheel
-		glm::mat4 rotMatrix = glm::rotate(glm::mat4(1.0f),
+		// --- 1) recompute the wheel rotation used for all carts ---
+		glm::mat4 rotM = glm::rotate(
+			glm::mat4(1.0f),
 			glm::radians(wheelRotationAngle),
-			glm::vec3(0.0f, 0.0f, 1.0f));
-		cameraPos = glm::vec3(rotMatrix * glm::vec4(cartOffset, 1.0f));
+			glm::vec3(0.0f, 0.0f, 1.0f)
+		);
 
-		// Recalculate direction using yaw/pitch, like in FREE_CAMERA
-		glm::vec3 direction;
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraTarget = cameraPos + glm::normalize(direction);
+		// --- 2) get cart1’s world position via its baked-in offset ---
+		glm::vec3 bakedOffset = cartOffsets[0];
+		glm::vec3 cartWorldPos = glm::vec3(rotM * glm::vec4(bakedOffset, 1.0f));
 
-		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		// --- 3) compute look-direction from yaw/pitch (same math as mouse) ---
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front = glm::normalize(front);
+
+		// --- 4) camera sits at cart + offset, looking out along front ---
+		glm::vec3 camPos = cartWorldPos + cartCamOffset;
+		glm::vec3 camTarget = camPos + front;
+		view = glm::lookAt(camPos, camTarget, cameraUp);
 	}
-
-
-
-
-
 
 
 	glUniformMatrix4fv(
