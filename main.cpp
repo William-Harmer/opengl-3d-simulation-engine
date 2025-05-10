@@ -115,7 +115,7 @@ float wheelRotationSpeed = 0.025f;
 std::vector<CThreeDModel*> carts;
 std::vector<glm::vec3> cartOffsets;
 
-glm::vec3 cartCamOffset = glm::vec3(0.0f, -100.0f, 0.0f);
+glm::vec3 cartCamOffset = glm::vec3(-30.0f, -70.0f, 0.0f);
 
 
 
