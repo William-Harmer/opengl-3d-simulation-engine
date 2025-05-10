@@ -115,10 +115,6 @@ std::vector<glm::vec3> cartOffsets;
 
 glm::vec3 cartCamOffset = glm::vec3(-30.0f, -70.0f, 0.0f);
 
-
-
-
-
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
@@ -330,25 +326,25 @@ void display()
 
 
 	for (size_t i = 0; i < carts.size(); ++i) {
-		CThreeDModel& m = *carts[i];
-		glm::vec3  offset = cartOffsets[i];
+		CThreeDModel* cart = carts[i];
 
-		// rotate the pivot
+		// if we’re in cart camera mode, skip the top of cart1
+		if (currentCameraMode == CART_CAMERA && cart == &cart1Top)
+			continue;
+
+		const glm::vec3& offset = cartOffsets[i];
 		glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(offset, 1.0f));
-		// compute how far to translate from the mesh's baked-in origin
 		glm::vec3 deltaPos = rotatedPos - offset;
 
-		// build model matrix with *only* that translation
 		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), deltaPos);
-
-		// set MV / Normal matrices
 		glm::mat4 mv = view * modelCart;
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
-		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		glUniformMatrix3fv(
+			glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(
+			glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
 
-		// draw
-		m.DrawElementsUsingVBO(myShader);
+		cart->DrawElementsUsingVBO(myShader);
 	}
 
 	// Flush and swap
