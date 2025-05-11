@@ -44,7 +44,7 @@ CThreeDModel innerrect9, innerrect10, innerrect11, innerrect12, innerrect13, inn
 CThreeDModel stand1, stand2, stand3, stand4;
 
 // lights
-CThreeDModel light1;
+std::vector<CThreeDModel> lights;
 
 COBJLoader objLoader;
 
@@ -324,38 +324,28 @@ void display()
 		stand4.DrawElementsUsingVBO(myShader);
 	}
 
-	// ——— Blinking glow for light1 ———
-
-	// 1) get elapsed ms and compute on/off every 300ms
+	// ——— Blinking glow for all lights ———
 	int elapsed = glutGet(GLUT_ELAPSED_TIME);
 	bool blink = ((elapsed / 300) % 2) == 0;
-
-	// 2) define your on/off emission colors
-	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f);
-	glm::vec4 emitOff(0.0f);
-
-	// 3) cache the uniform locations once (static so we do it only on first call)
+	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f), emitOff(0.0f);
 	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
 	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
 	static GLint locShininess = glGetUniformLocation(prog, "material_shininess");
 
-	// 4) upload the current emission
+	// turn glow on
 	glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
+	glUniform4f(locSpecular, 1, 1, 1, 1);
+	glUniform1f(locShininess, 128.0f);
 
-	// 5) **override** specular & shininess for a sharper highlight on the bulb
-	glUniform4f(locSpecular, 1.0f, 1.0f, 1.0f, 1.0f);   // bright white highlights
-	glUniform1f(locShininess, 128.0f);                  // tight, sharp specular lobe
+	// draw each light
+	for (auto& L : lights)
+		drawRot(L);
 
-	// 6) draw light1 rotating with the wheel
-	drawRot(light1);
-
-
-	// 7) reset emission so the rest of your scene doesn’t glow
+	// reset glow & specular so the rest of the scene isn’t affected
 	glUniform4fv(locEmit, 1, glm::value_ptr(emitOff));
-
-	// 8) restore your “normal” specular & shininess for all other objects
 	glUniform4fv(locSpecular, 1, Material_Specular);
 	glUniform1f(locShininess, Material_Shininess);
+
 
 	// ——— end blinking glow ———
 
@@ -483,14 +473,17 @@ void init()
 	else cout << " model failed to load Stand4" << endl;
 
 	// load the blinking-bulb model
-	if (objLoader.LoadModel("TestModels/light1.obj")) {
-		light1.ConstructModelFromOBJLoader(objLoader);
-		light1.InitVBO(myShader);
+	for (int i = 1; i <= 32; ++i) {
+		std::string path = "TestModels/light" + std::to_string(i) + ".obj";
+		if (objLoader.LoadModel(path.c_str())) {
+			lights.emplace_back();                                  // add a new CThreeDModel
+			lights.back().ConstructModelFromOBJLoader(objLoader);
+			lights.back().InitVBO(myShader);
+		}
+		else {
+			std::cerr << "model failed to load " << path << "\n";
+		}
 	}
-	else {
-		cout << "model failed to load light1" << endl;
-	}
-
 
 
 	// load cart1
