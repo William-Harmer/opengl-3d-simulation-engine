@@ -43,6 +43,9 @@ CThreeDModel innerrect1, innerrect2, innerrect3, innerrect4, innerrect5, innerre
 CThreeDModel innerrect9, innerrect10, innerrect11, innerrect12, innerrect13, innerrect14, innerrect15, innerrect16;
 CThreeDModel stand1, stand2, stand3, stand4;
 
+// lights
+CThreeDModel light1;
+
 COBJLoader objLoader;
 
 float amount = 0;
@@ -59,6 +62,9 @@ enum CameraMode {
 CameraMode currentCameraMode = FREE_CAMERA;
 
 ///END MODEL LOADING
+
+
+// Make sure to add the octrees so that they can see the problem I was having
 
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
 glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
@@ -255,24 +261,6 @@ void display()
 	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
 	drawRot(centerstar);
 
-		// 1) Build the same model?matrix you used to draw the part:
-	glm::mat4 modelMatrix = rotationMatrix; 
-	//    (if you had a translation or scale too, e.g. 
-	//     glm::mat4 modelMatrix = translateMatrix * rotationMatrix * scaleMatrix; )
-
-	// 2) Invert it so we can move the camera?position into model?space:
-	glm::mat4 invModel = glm::inverse(modelMatrix);
-
-	// 3) Transform the world?space point into that model?space:
-	glm::vec3 localCam = glm::vec3(invModel * glm::vec4(cameraPos, 1.0f));
-
-	//// 4) Test against the leaf?octree in model?space:
-	//if ( wheelringfront1.IsPointInLeaf(localCam.x, localCam.y, localCam.z) ) {
-	//	std::cout << "touching\n";
-	//} else {
-	//	std::cout << "Not touching\n";
-	//}
-
 
 
 	//centerstar.DrawOctreeLeaves(myShader);
@@ -335,6 +323,43 @@ void display()
 		stand3.DrawElementsUsingVBO(myShader);
 		stand4.DrawElementsUsingVBO(myShader);
 	}
+
+	// ——— Blinking glow for light1 ———
+
+	// 1) get elapsed ms and compute on/off every 300ms
+	int elapsed = glutGet(GLUT_ELAPSED_TIME);
+	bool blink = ((elapsed / 300) % 2) == 0;
+
+	// 2) define your on/off emission colors
+	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f);
+	glm::vec4 emitOff(0.0f);
+
+	// 3) cache the uniform locations once (static so we do it only on first call)
+	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
+	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
+	static GLint locShininess = glGetUniformLocation(prog, "material_shininess");
+
+	// 4) upload the current emission
+	glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
+
+	// 5) **override** specular & shininess for a sharper highlight on the bulb
+	glUniform4f(locSpecular, 1.0f, 1.0f, 1.0f, 1.0f);   // bright white highlights
+	glUniform1f(locShininess, 128.0f);                  // tight, sharp specular lobe
+
+	// 6) draw light1 rotating with the wheel
+	drawRot(light1);
+
+
+	// 7) reset emission so the rest of your scene doesn’t glow
+	glUniform4fv(locEmit, 1, glm::value_ptr(emitOff));
+
+	// 8) restore your “normal” specular & shininess for all other objects
+	glUniform4fv(locSpecular, 1, Material_Specular);
+	glUniform1f(locShininess, Material_Shininess);
+
+	// ——— end blinking glow ———
+
+
 
 
 	for (size_t i = 0; i < carts.size(); ++i) {
@@ -456,6 +481,17 @@ void init()
 	else cout << " model failed to load Stand3" << endl;
 	if (objLoader.LoadModel("TestModels/Stand4.obj")) { stand4.ConstructModelFromOBJLoader(objLoader); stand4.InitVBO(myShader); }
 	else cout << " model failed to load Stand4" << endl;
+
+	// load the blinking-bulb model
+	if (objLoader.LoadModel("TestModels/light1.obj")) {
+		light1.ConstructModelFromOBJLoader(objLoader);
+		light1.InitVBO(myShader);
+	}
+	else {
+		cout << "model failed to load light1" << endl;
+	}
+
+
 
 	// load cart1
 	if (objLoader.LoadModel("TestModels/cart1.obj")) {

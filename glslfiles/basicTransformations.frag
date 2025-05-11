@@ -17,6 +17,8 @@ uniform vec4 material_diffuse;
 uniform vec4 material_specular;
 uniform float material_shininess;
 
+uniform vec4 material_emission;
+
 uniform sampler2D DiffuseMap;
 
 void main(void)
@@ -54,5 +56,5 @@ void main(void)
 	//out_Color = color;  //show just lighting
 
 	//out_Color = texture(DiffuseMap, ex_TexCoord); //show texture only
-    out_Color = color * texture(DiffuseMap, ex_TexCoord); //show texture and lighting
+    out_Color = color * texture(DiffuseMap, ex_TexCoord) + material_emission; //show texture and lighting
 }
