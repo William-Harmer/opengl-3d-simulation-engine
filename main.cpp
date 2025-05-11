@@ -694,7 +694,15 @@ bool CheckCollision(const glm::vec3& worldPos) {
 			return true;
 	}
 
-	// --- C) moving carts (orbiting) ---
+	// C) lights (blinking spheres) – treat them like any other mesh
+	for (auto& L : lights) {
+		// if your lights only rotate, you may need the same invRotM transformation:
+		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
+		if (L.IsPointInLeaf(local.x, local.y, local.z))
+			return true;
+	}
+
+	// --- D) moving carts (orbiting) ---
 	// For each cart: compute the same rotation-pivot you use in display(),
 	// then invert that translation to bring worldPos into cart-model space.
 	for (size_t i = 0; i < carts.size(); ++i) {
