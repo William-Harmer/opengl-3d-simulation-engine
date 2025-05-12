@@ -123,6 +123,8 @@ std::vector<glm::vec3> cartOffsets;
 
 glm::vec3 cartCamOffset = glm::vec3(-30.0f, -70.0f, 0.0f);
 
+const float COLLISION_MARGIN = 3.0f;
+
 // ?? Light?mode state ????????????????????????????????
 enum LightMode {
 	LIGHT_SOLID = 0,
@@ -798,31 +800,39 @@ void processKeys() {
 	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed;
 	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed;
 	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f;
-	if (wheelRotationAngle < 0.0f) wheelRotationAngle += 360.0f;
+	if (wheelRotationAngle < 0.0f)  wheelRotationAngle += 360.0f;
 
 	// Block movement keys if not in free camera mode
 	if (currentCameraMode != FREE_CAMERA)
 		return;
 
-	// Movement logic (WASD, space, Z)
+	// Movement directions
 	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
 	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
 	glm::vec3 up = cameraUp;
 
 	auto tryMove = [&](const glm::vec3& delta) {
+		// candidate new camera position
 		glm::vec3 np = cameraPos + delta;
-		if (!CheckCollision(np)) {
+
+		// compute look-ahead point so we stop early
+		float len = glm::length(delta);
+		glm::vec3 dir = (len > 1e-6f ? delta / len : glm::vec3(0.0f));
+		glm::vec3 checkPos = np + dir * COLLISION_MARGIN;
+
+		// only commit if buffer-adjusted point is collision-free
+		if (!CheckCollision(checkPos)) {
 			cameraPos = np;
 			cameraTarget += delta;
 		}
 		};
 
-	if (keyState['w']) tryMove(forward * cameraSpeed);
-	if (keyState['s']) tryMove(-forward * cameraSpeed);
-	if (keyState['a']) tryMove(-right * cameraSpeed);
-	if (keyState['d']) tryMove(right * cameraSpeed);
-	if (keyState[32])  tryMove(up * cameraSpeed);    // space
-	if (keyState['z']) tryMove(-up * cameraSpeed);   // fly down
+	if (keyState['w'])   tryMove(forward * cameraSpeed);
+	if (keyState['s'])   tryMove(-forward * cameraSpeed);
+	if (keyState['a'])   tryMove(-right * cameraSpeed);
+	if (keyState['d'])   tryMove(right * cameraSpeed);
+	if (keyState[32])    tryMove(up * cameraSpeed);  // space
+	if (keyState['z'])   tryMove(-up * cameraSpeed);  // fly down
 }
 
 
