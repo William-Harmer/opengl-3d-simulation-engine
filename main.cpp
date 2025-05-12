@@ -2,55 +2,56 @@
 #include <string>
 using namespace std;
 
-// OpenGL
+// OpenGL.
 #include "GL/glew.h"
 #include "GL/wglew.h"
 #pragma comment(lib, "glew32.lib")
 
-// GLM
+// GLM (OpenGL maths library for matrices etc).
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtc/matrix_inverse.hpp"
 
-#include "GL/freeglut.h"
-#include "Images/FreeImage.h"
-#include "shaders/Shader.h"
+// Freeglut (For the window).
+#include "GL/freeglut.h"                                                                                                                                          
 
+// Library used to load images.
+#include "Images/FreeImage.h"
+
+// Creating a shader.
+#include "shaders/Shader.h"
 CShader* myShader;
 
-// MODEL LOADING
+// MODEL LOADING --------------------------------------------------------------------------------------------------------------------------------------------
 #include "3DStruct/threeDModel.h"
 #include "Obj/OBJLoader.h"
-
-// Cart models
-CThreeDModel cart1, cart1Top, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
-
-// Rotating models
-CThreeDModel centerstar;
-
-// Static models
-CThreeDModel theFloor;
-// Individual new models
-CThreeDModel bottompart, centerblock;
-CThreeDModel wheelringfront1, wheelringfront2;
-CThreeDModel wheelline1, wheelline2, wheelline3, wheelline4, wheelline5, wheelline6, wheelline7, wheelline8;
-CThreeDModel wheelline9, wheelline10, wheelline11, wheelline12, wheelline13, wheelline14, wheelline15, wheelline16;
-CThreeDModel wheelline17, wheelline18, wheelline19, wheelline20, wheelline21, wheelline22, wheelline23, wheelline24;
-CThreeDModel wheelline25, wheelline26, wheelline27, wheelline28, wheelline29, wheelline30, wheelline31, wheelline32;
-CThreeDModel innerwheelring1, innerwheelring2;
-CThreeDModel innerrect1, innerrect2, innerrect3, innerrect4, innerrect5, innerrect6, innerrect7, innerrect8;
-CThreeDModel innerrect9, innerrect10, innerrect11, innerrect12, innerrect13, innerrect14, innerrect15, innerrect16;
-CThreeDModel stand1, stand2, stand3, stand4;
-
-// lights
-std::vector<CThreeDModel> lights;
-
 COBJLoader objLoader;
 
-float amount = 0;
-float temp = 0.002f;
+// Carts.
+CThreeDModel cart1, cart1Top, cart2, cart3, cart4, cart5, cart6, cart7, cart8, cart9, cart10, cart11, cart12, cart13, cart14, cart15, cart16;
 
+// Rotating parts of wheel.
+CThreeDModel centerstar;
+CThreeDModel wheelringfront1, wheelringfront2;
+CThreeDModel innerwheelring1, innerwheelring2;
+CThreeDModel wheelline1, wheelline2, wheelline3, wheelline4, wheelline5, wheelline6, wheelline7, wheelline8, wheelline9, wheelline10, wheelline11, 
+			 wheelline12, wheelline13, wheelline14, wheelline15, wheelline16, wheelline17, wheelline18, wheelline19, wheelline20, wheelline21, wheelline22, 
+			 wheelline23, wheelline24, wheelline25, wheelline26, wheelline27, wheelline28, wheelline29, wheelline30, wheelline31, wheelline32;
+CThreeDModel innerrect1, innerrect2, innerrect3, innerrect4, innerrect5, innerrect6, innerrect7, innerrect8, innerrect9, innerrect10, innerrect11, 
+			 innerrect12, innerrect13, innerrect14, innerrect15, innerrect16;
+
+// lights.
+std::vector<CThreeDModel> lights;
+
+// Static models.
+CThreeDModel stand1, stand2, stand3, stand4;
+CThreeDModel bottompart;
+CThreeDModel centerblock;
+CThreeDModel theFloor;
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Camera config.
 enum CameraMode {
 	FREE_CAMERA,
 	CART_CAMERA,
@@ -58,89 +59,317 @@ enum CameraMode {
 	FIXED_CAMERA_2,
 	FIXED_CAMERA_3
 };
-
 CameraMode currentCameraMode = FREE_CAMERA;
-
-///END MODEL LOADING
-
-
-// Make sure to add the octrees so that they can see the problem I was having
-
-glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
-glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
-
-//glm::mat4 objectRotation;
-//glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
-//glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f); //vector for the position of the object.
-
-//Material properties
-float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-float Material_Diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
-float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
-float Material_Shininess = 50;
-
-//Light Properties
-float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
-float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
-
-int screenWidth = 1280, screenHeight = 720;
-
-bool keyState[256] = { false };  // Array to store the state of each key (256 keys)
-
-
-//OPENGL FUNCTION PROTOTYPES
-void display();				//called in winmain to draw everything to the screen
-void reshape(int width, int height);				//called when the window is resized
-void init();				//called in winmain when the program starts.
-void processKeys();         //called in winmain to process keyboard input
-void idle();		//idle function
-
-// The camera matrix (viewingMatrix called inside display())
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 1000.0f); // The inital position of the camera in the 3D space
-glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // The inital look at coordinates
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Defines the up direction of the camera. It tells the camera what direction is "up" relative to the world coordinates.
-
-glm::vec3 cartTopPos = glm::vec3(000.0f, 776.0f, 0.0f);
-
-
-
-// Mouse control variables
-float yaw = -90.0f;  // Horizontal angle (initialized facing -Z)
-float pitch = 0.0f;  // Vertical angle
-float lastX = screenWidth / 2.0f;
-float lastY = screenHeight / 2.0f;
-bool firstMouse = true;
-
-float cameraSpeed = 0.75f; // You can adjust the movement speed
-
-float wheelRotationAngle = 0.0f;
-float wheelRotationSpeed = 0.025f;
-
-
-std::vector<CThreeDModel*> carts;
-std::vector<glm::vec3> cartOffsets;
-
 glm::vec3 cartCamOffset = glm::vec3(-30.0f, -70.0f, 0.0f);
 
-const float COLLISION_MARGIN = 3.0f;
+// Free cam config.
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 1000.0f); // 3D space pos.
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // Looking at pos.
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Which direction is up.
+float cameraSpeed = 0.75f;
 
-// ?? Light?mode state ????????????????????????????????
+// Lighting config.
 enum LightMode {
 	LIGHT_SOLID = 0,
 	LIGHT_BLINK = 1,
 	LIGHT_SEQ = 2
 };
-LightMode currentLightMode = LIGHT_SOLID;  // start in blinking mode
-// —— Sequential chase settings ——
-// How many lights to light up at once:
+LightMode currentLightMode = LIGHT_SOLID;
+const int LIGHT_BLINK_DURATION = 300;
 const int SEQ_LIGHT_COUNT = 5;
-// How many milliseconds between each step:
 const int SEQ_STEP_DURATION = 150;
 
+// Screen settings.
+int screenWidth = 1280, screenHeight = 720;
+
+// Mouse config.
+float yaw = -90.0f;
+float pitch = 0.0f;
+float lastX = screenWidth / 2.0f;
+float lastY = screenHeight / 2.0f;
+bool firstMouse = true;
+
+//Material properties.
+float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+float Material_Diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
+float Material_Shininess = 50;
+
+//Light Properties.
+float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
+float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
+
+// Wheel rotation settings.
+float wheelRotationAngle = 0.0f;
+float wheelRotationSpeed = 0.025f;
+
+// Array that holds key presses.
+bool keyState[256] = { false };
+
+// Array that holds the carts.
+std::vector<CThreeDModel*> carts;
+std::vector<glm::vec3> cartOffsets;
+
+// Buffer distance for collision.
+const float COLLISION_MARGIN = 3.0f;
+
+glm::mat4 ProjectionMatrix;
+glm::mat4 ModelViewMatrix;
+
+// FUNCTIONS ------------------------------------------------------------------------------------------------------------------------------------------------
+void init() // Runs once when the program first starts.
+{
+	// Set the background colour.
+	float r = 125.0f / 255.0f;
+	float g = 191.0f / 255.0f;
+	float b = 221.0f / 255.0f;
+	float a = 0.1f;
+	glClearColor(r, g, b, a);
+
+	// Enable depth so that depth buffering is used (Tracks how far away each pixel is) and so objects have proper occlusion (Objects that are closer are 
+	// drawn first).
+	glEnable(GL_DEPTH_TEST);
+
+	// Create a shader for lighting, colour etc.
+	myShader = new CShader();
+	if (!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag")) cout << 
+		"failed to load shader" << endl;
+
+	// Set my shader to be used.
+	glUseProgram(myShader->GetProgramObjID());
+
+	// Use 2D texturing. Doesn't seem to do anything for my code.
+	glEnable(GL_TEXTURE_2D);
+
+	// Enable hiding of cursor when you are in the window.
+	glutSetCursor(GLUT_CURSOR_NONE);
+
+	// Load all the models.
+	// InitVBO moves all the model mesh data from the CPU to th GPU.
+	cout << " Loading models: " << endl;
+
+	// Wheel rotating models.
+	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); } 
+	else cout << " model failed to load floor" << endl;
+
+	if (objLoader.LoadModel("TestModels/Wheelringfront1.obj")) { wheelringfront1.ConstructModelFromOBJLoader(objLoader); wheelringfront1.InitVBO(myShader); }
+	else cout << " model failed to load Wheelringfront1" << endl;
+
+	if (objLoader.LoadModel("TestModels/Wheelringfront2.obj")) { wheelringfront2.ConstructModelFromOBJLoader(objLoader); wheelringfront2.InitVBO(myShader); }
+	else cout << " model failed to load Wheelringfront2" << endl;
+
+	if (objLoader.LoadModel("TestModels/Centerstar.obj")) { centerstar.ConstructModelFromOBJLoader(objLoader); centerstar.InitVBO(myShader); }
+	else cout << " model failed to load Centerstar" << endl;
+
+	if (objLoader.LoadModel("TestModels/Innerwheelring1.obj")) { innerwheelring1.ConstructModelFromOBJLoader(objLoader); innerwheelring1.InitVBO(myShader); }
+	else cout << " model failed to load Innerwheelring1" << endl;
+
+	if (objLoader.LoadModel("TestModels/Innerwheelring2.obj")) { innerwheelring2.ConstructModelFromOBJLoader(objLoader); innerwheelring2.InitVBO(myShader); }
+	else cout << " model failed to load Innerwheelring2" << endl;
+
+	// Macro.
+	// #n makes the number become text.
+	// ## concatenates the before and after together.
+	#define LOAD_WHEEL_LINE(n) \
+        if (objLoader.LoadModel("TestModels/Wheelline" #n ".obj")) { wheelline##n.ConstructModelFromOBJLoader(objLoader); wheelline##n.InitVBO(myShader); } \
+        else cout << " model failed to load Wheelline" #n << endl;
+
+		LOAD_WHEEL_LINE(1)  LOAD_WHEEL_LINE(2)  LOAD_WHEEL_LINE(3)  LOAD_WHEEL_LINE(4)
+		LOAD_WHEEL_LINE(5)  LOAD_WHEEL_LINE(6)  LOAD_WHEEL_LINE(7)  LOAD_WHEEL_LINE(8)
+		LOAD_WHEEL_LINE(9)  LOAD_WHEEL_LINE(10) LOAD_WHEEL_LINE(11) LOAD_WHEEL_LINE(12)
+		LOAD_WHEEL_LINE(13) LOAD_WHEEL_LINE(14) LOAD_WHEEL_LINE(15) LOAD_WHEEL_LINE(16)
+		LOAD_WHEEL_LINE(17) LOAD_WHEEL_LINE(18) LOAD_WHEEL_LINE(19) LOAD_WHEEL_LINE(20)
+		LOAD_WHEEL_LINE(21) LOAD_WHEEL_LINE(22) LOAD_WHEEL_LINE(23) LOAD_WHEEL_LINE(24)
+		LOAD_WHEEL_LINE(25) LOAD_WHEEL_LINE(26) LOAD_WHEEL_LINE(27) LOAD_WHEEL_LINE(28)
+		LOAD_WHEEL_LINE(29) LOAD_WHEEL_LINE(30) LOAD_WHEEL_LINE(31) LOAD_WHEEL_LINE(32)
+
+	#undef LOAD_WHEEL_LINE
+
+	#define LOAD_INNER_RECT(n) \
+        if (objLoader.LoadModel("TestModels/Innerrect" #n ".obj")) { innerrect##n.ConstructModelFromOBJLoader(objLoader); innerrect##n.InitVBO(myShader); } \
+        else cout << " model failed to load Innerrect" #n << endl;
+
+		LOAD_INNER_RECT(1)  LOAD_INNER_RECT(2)  LOAD_INNER_RECT(3)  LOAD_INNER_RECT(4)
+		LOAD_INNER_RECT(5)  LOAD_INNER_RECT(6)  LOAD_INNER_RECT(7)  LOAD_INNER_RECT(8)
+		LOAD_INNER_RECT(9)  LOAD_INNER_RECT(10) LOAD_INNER_RECT(11) LOAD_INNER_RECT(12)
+		LOAD_INNER_RECT(13) LOAD_INNER_RECT(14) LOAD_INNER_RECT(15) LOAD_INNER_RECT(16)
+
+	#undef LOAD_INNER_RECT
+
+	// Static models.
+	if (objLoader.LoadModel("TestModels/Bottompart.obj")) { bottompart.ConstructModelFromOBJLoader(objLoader); bottompart.InitVBO(myShader); }
+	else cout << " model failed to load Bottompart" << endl;
+
+	if (objLoader.LoadModel("TestModels/Centerblock.obj")) { centerblock.ConstructModelFromOBJLoader(objLoader); centerblock.InitVBO(myShader); }
+	else cout << " model failed to load Centerblock" << endl;
+
+	if (objLoader.LoadModel("TestModels/Stand1.obj")) { stand1.ConstructModelFromOBJLoader(objLoader); stand1.InitVBO(myShader); }
+	else cout << " model failed to load Stand1" << endl;
+
+	if (objLoader.LoadModel("TestModels/Stand2.obj")) { stand2.ConstructModelFromOBJLoader(objLoader); stand2.InitVBO(myShader); }
+	else cout << " model failed to load Stand2" << endl;
+
+	if (objLoader.LoadModel("TestModels/Stand3.obj")) { stand3.ConstructModelFromOBJLoader(objLoader); stand3.InitVBO(myShader); }
+	else cout << " model failed to load Stand3" << endl;
+
+	if (objLoader.LoadModel("TestModels/Stand4.obj")) { stand4.ConstructModelFromOBJLoader(objLoader); stand4.InitVBO(myShader); }
+	else cout << " model failed to load Stand4" << endl;
+
+	// Light models.
+	for (int i = 1; i <= 32; ++i) {
+		std::string path = "TestModels/light" + std::to_string(i) + ".obj"; // Get the light location.
+		if (objLoader.LoadModel(path.c_str())) { // Load it.
+			lights.emplace_back(); // Put it in the array.
+			lights.back().ConstructModelFromOBJLoader(objLoader);
+			lights.back().InitVBO(myShader);
+		}
+		else {
+			std::cerr << "model failed to load " << path << "\n";
+		}
+	}
+
+	// Loading the cart models with their coordinates.
+
+	// Cart1
+	if (objLoader.LoadModel("TestModels/cart1.obj")) {
+		cart1.ConstructModelFromOBJLoader(objLoader);
+		cart1.InitVBO(myShader);
+		carts.push_back(&cart1);
+		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
+	}
+
+	if (objLoader.LoadModel("TestModels/cart1Top.obj")) {
+		cart1Top.ConstructModelFromOBJLoader(objLoader);
+		cart1Top.InitVBO(myShader);
+		carts.push_back(&cart1Top);
+		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
+	}
+
+	// Cart2
+	if (objLoader.LoadModel("TestModels/cart2.obj")) {
+		cart2.ConstructModelFromOBJLoader(objLoader);
+		cart2.InitVBO(myShader);
+
+		carts.push_back(&cart2);
+		cartOffsets.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
+	}
+
+	// Cart3
+	if (objLoader.LoadModel("TestModels/cart3.obj")) {
+		cart3.ConstructModelFromOBJLoader(objLoader);
+		cart3.InitVBO(myShader);
+		carts.push_back(&cart3);
+		cartOffsets.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
+	}
+
+	// Cart4
+	if (objLoader.LoadModel("TestModels/cart4.obj")) {
+		cart4.ConstructModelFromOBJLoader(objLoader);
+		cart4.InitVBO(myShader);
+		carts.push_back(&cart4);
+		cartOffsets.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
+	}
+
+	// Cart 5
+	if (objLoader.LoadModel("TestModels/cart5.obj")) {
+		cart5.ConstructModelFromOBJLoader(objLoader);
+		cart5.InitVBO(myShader);
+
+		carts.push_back(&cart5);
+		cartOffsets.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
+	}
+
+	// Cart 6
+	if (objLoader.LoadModel("TestModels/cart6.obj")) {
+		cart6.ConstructModelFromOBJLoader(objLoader);
+		cart6.InitVBO(myShader);
+		carts.push_back(&cart6);
+		cartOffsets.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
+	}
+
+	// Cart 7
+	if (objLoader.LoadModel("TestModels/cart7.obj")) {
+		cart7.ConstructModelFromOBJLoader(objLoader);
+		cart7.InitVBO(myShader);
+		carts.push_back(&cart7);
+		cartOffsets.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
+	}
+
+	// Cart 8
+	if (objLoader.LoadModel("TestModels/cart8.obj")) {
+		cart8.ConstructModelFromOBJLoader(objLoader);
+		cart8.InitVBO(myShader);
+		carts.push_back(&cart8);
+		cartOffsets.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
+	}
+
+	// Cart 9
+	if (objLoader.LoadModel("TestModels/cart9.obj")) {
+		cart9.ConstructModelFromOBJLoader(objLoader);
+		cart9.InitVBO(myShader);
+		carts.push_back(&cart9);
+		cartOffsets.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
+	}
+
+	// Cart 10
+	if (objLoader.LoadModel("TestModels/cart10.obj")) {
+		cart10.ConstructModelFromOBJLoader(objLoader);
+		cart10.InitVBO(myShader);
+		carts.push_back(&cart10);
+		cartOffsets.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
+	}
+
+	// Cart 11
+	if (objLoader.LoadModel("TestModels/cart11.obj")) {
+		cart11.ConstructModelFromOBJLoader(objLoader);
+		cart11.InitVBO(myShader);
+		carts.push_back(&cart11);
+		cartOffsets.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
+	}
+
+	// Cart 12
+	if (objLoader.LoadModel("TestModels/cart12.obj")) {
+		cart12.ConstructModelFromOBJLoader(objLoader);
+		cart12.InitVBO(myShader);
+		carts.push_back(&cart12);
+		cartOffsets.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
+	}
+
+	// Cart 13
+	if (objLoader.LoadModel("TestModels/cart13.obj")) {
+		cart13.ConstructModelFromOBJLoader(objLoader);
+		cart13.InitVBO(myShader);
+		carts.push_back(&cart13);
+		cartOffsets.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
+	}
+
+	// Cart 14
+	if (objLoader.LoadModel("TestModels/cart14.obj")) {
+		cart14.ConstructModelFromOBJLoader(objLoader);
+		cart14.InitVBO(myShader);
+		carts.push_back(&cart14);
+		cartOffsets.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
+	}
+
+	// Cart 15
+	if (objLoader.LoadModel("TestModels/cart15.obj")) {
+		cart15.ConstructModelFromOBJLoader(objLoader);
+		cart15.InitVBO(myShader);
+		carts.push_back(&cart15);
+		cartOffsets.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
+	}
+
+	// Cart 16
+	if (objLoader.LoadModel("TestModels/cart16.obj")) {
+		cart16.ConstructModelFromOBJLoader(objLoader);
+		cart16.InitVBO(myShader);
+		carts.push_back(&cart16);
+		cartOffsets.push_back(glm::vec3(295.0f, 716.0f, 0.0f));
+	}
+}
 
 
-/*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
 	 //std::cout 
@@ -156,11 +385,6 @@ void display()
 	// Use our shader
 	GLuint prog = myShader->GetProgramObjID();
 	glUseProgram(prog);
-
-	// --- displacement uniform (if still used) ---
-	amount += temp;
-	if (amount > 1.0f || amount < -1.5f) temp = -temp;
-	glUniform1f(glGetUniformLocation(prog, "displacement"), amount);
 
 	// --- Projection matrix ---
 	glUniformMatrix4fv(
@@ -360,7 +584,7 @@ void display()
 	case LIGHT_BLINK:
 	{
 		// All lights toggle on/off every 300ms
-		bool blink = ((elapsed / 300) % 2) == 0;
+		bool blink = ((elapsed / LIGHT_BLINK_DURATION) % 2) == 0;
 		glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
 		for (auto& L : lights)
 			drawRot(L);
@@ -444,242 +668,6 @@ void reshape(int width, int height)		// Resize the OpenGL window
 
 	//Set the projection matrix
 	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 6000.0f);
-}
-
-void init()
-{
-
-	float r = 125.0f / 255.0f;  // ? 0.137f
-	float g = 191.0f / 255.0f;  // ? 0.663f
-	float b = 221.0f / 255.0f;  // ? 0.839f
-	float a = 0.1f;             // same alpha
-
-	glClearColor(r, g, b, a);
-
-	glEnable(GL_DEPTH_TEST);
-
-	myShader = new CShader();
-	if (!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
-		cout << "failed to load shader" << endl;
-
-	glUseProgram(myShader->GetProgramObjID());
-	glEnable(GL_TEXTURE_2D);
-
-	cout << " loading models " << endl;
-
-	// Floor
-	if (objLoader.LoadModel("TestModels/floor.obj")) { theFloor.ConstructModelFromOBJLoader(objLoader); theFloor.InitVBO(myShader); }
-	else cout << " model failed to load floor" << endl;
-	// Centerstar
-	if (objLoader.LoadModel("TestModels/Centerstar.obj")) { centerstar.ConstructModelFromOBJLoader(objLoader); centerstar.InitVBO(myShader); }
-	else cout << " model failed to load Centerstar" << endl;
-	// Bottompart
-	if (objLoader.LoadModel("TestModels/Bottompart.obj")) { bottompart.ConstructModelFromOBJLoader(objLoader); bottompart.InitVBO(myShader); }
-	else cout << " model failed to load Bottompart" << endl;
-	// Centerblock
-	if (objLoader.LoadModel("TestModels/Centerblock.obj")) { centerblock.ConstructModelFromOBJLoader(objLoader); centerblock.InitVBO(myShader); }
-	else cout << " model failed to load Centerblock" << endl;
-
-	// Wheelringfront1
-	if (objLoader.LoadModel("TestModels/Wheelringfront1.obj")) { wheelringfront1.ConstructModelFromOBJLoader(objLoader); wheelringfront1.InitVBO(myShader); }
-	else cout << " model failed to load Wheelringfront1" << endl;
-	// Wheelringfront2
-	if (objLoader.LoadModel("TestModels/Wheelringfront2.obj")) { wheelringfront2.ConstructModelFromOBJLoader(objLoader); wheelringfront2.InitVBO(myShader); }
-	else cout << " model failed to load Wheelringfront2" << endl;
-
-	// Wheellines 1-32
-#define LOAD_WHEEL_LINE(n) \
-        if (objLoader.LoadModel("TestModels/Wheelline" #n ".obj")) { wheelline##n.ConstructModelFromOBJLoader(objLoader); wheelline##n.InitVBO(myShader); } \
-        else cout << " model failed to load Wheelline" #n << endl;
-		LOAD_WHEEL_LINE(1)  LOAD_WHEEL_LINE(2)  LOAD_WHEEL_LINE(3)  LOAD_WHEEL_LINE(4)
-		LOAD_WHEEL_LINE(5)  LOAD_WHEEL_LINE(6)  LOAD_WHEEL_LINE(7)  LOAD_WHEEL_LINE(8)
-		LOAD_WHEEL_LINE(9)  LOAD_WHEEL_LINE(10) LOAD_WHEEL_LINE(11) LOAD_WHEEL_LINE(12)
-		LOAD_WHEEL_LINE(13) LOAD_WHEEL_LINE(14) LOAD_WHEEL_LINE(15) LOAD_WHEEL_LINE(16)
-		LOAD_WHEEL_LINE(17) LOAD_WHEEL_LINE(18) LOAD_WHEEL_LINE(19) LOAD_WHEEL_LINE(20)
-		LOAD_WHEEL_LINE(21) LOAD_WHEEL_LINE(22) LOAD_WHEEL_LINE(23) LOAD_WHEEL_LINE(24)
-		LOAD_WHEEL_LINE(25) LOAD_WHEEL_LINE(26) LOAD_WHEEL_LINE(27) LOAD_WHEEL_LINE(28)
-		LOAD_WHEEL_LINE(29) LOAD_WHEEL_LINE(30) LOAD_WHEEL_LINE(31) LOAD_WHEEL_LINE(32)
-#undef LOAD_WHEEL_LINE
-
-		// Innerwheelring1
-		if (objLoader.LoadModel("TestModels/Innerwheelring1.obj")) { innerwheelring1.ConstructModelFromOBJLoader(objLoader); innerwheelring1.InitVBO(myShader); }
-		else cout << " model failed to load Innerwheelring1" << endl;
-	// Innerwheelring2
-	if (objLoader.LoadModel("TestModels/Innerwheelring2.obj")) { innerwheelring2.ConstructModelFromOBJLoader(objLoader); innerwheelring2.InitVBO(myShader); }
-	else cout << " model failed to load Innerwheelring2" << endl;
-
-	// Innerrect 1-16
-#define LOAD_INNER_RECT(n) \
-        if (objLoader.LoadModel("TestModels/Innerrect" #n ".obj")) { innerrect##n.ConstructModelFromOBJLoader(objLoader); innerrect##n.InitVBO(myShader); } \
-        else cout << " model failed to load Innerrect" #n << endl;
-	LOAD_INNER_RECT(1)  LOAD_INNER_RECT(2)  LOAD_INNER_RECT(3)  LOAD_INNER_RECT(4)
-		LOAD_INNER_RECT(5)  LOAD_INNER_RECT(6)  LOAD_INNER_RECT(7)  LOAD_INNER_RECT(8)
-		LOAD_INNER_RECT(9)  LOAD_INNER_RECT(10) LOAD_INNER_RECT(11) LOAD_INNER_RECT(12)
-		LOAD_INNER_RECT(13) LOAD_INNER_RECT(14) LOAD_INNER_RECT(15) LOAD_INNER_RECT(16)
-#undef LOAD_INNER_RECT
-
-		// Stands 1-4
-	if (objLoader.LoadModel("TestModels/Stand1.obj")) { stand1.ConstructModelFromOBJLoader(objLoader); stand1.InitVBO(myShader); }
-	else cout << " model failed to load Stand1" << endl;
-	if (objLoader.LoadModel("TestModels/Stand2.obj")) { stand2.ConstructModelFromOBJLoader(objLoader); stand2.InitVBO(myShader); }
-	else cout << " model failed to load Stand2" << endl;
-	if (objLoader.LoadModel("TestModels/Stand3.obj")) { stand3.ConstructModelFromOBJLoader(objLoader); stand3.InitVBO(myShader); }
-	else cout << " model failed to load Stand3" << endl;
-	if (objLoader.LoadModel("TestModels/Stand4.obj")) { stand4.ConstructModelFromOBJLoader(objLoader); stand4.InitVBO(myShader); }
-	else cout << " model failed to load Stand4" << endl;
-
-	// load the blinking-bulb model
-	for (int i = 1; i <= 32; ++i) {
-		std::string path = "TestModels/light" + std::to_string(i) + ".obj";
-		if (objLoader.LoadModel(path.c_str())) {
-			lights.emplace_back();                                  // add a new CThreeDModel
-			lights.back().ConstructModelFromOBJLoader(objLoader);
-			lights.back().InitVBO(myShader);
-		}
-		else {
-			std::cerr << "model failed to load " << path << "\n";
-		}
-	}
-
-
-	// load cart1
-	if (objLoader.LoadModel("TestModels/cart1.obj")) {
-		cart1.ConstructModelFromOBJLoader(objLoader);
-		cart1.InitVBO(myShader);
-
-		carts.push_back(&cart1);
-		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart1Top.obj")) {
-		cart1Top.ConstructModelFromOBJLoader(objLoader);
-		cart1Top.InitVBO(myShader);
-		carts.push_back(&cart1Top);
-		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));  // same pivot as cart1
-	}
-
-	// load cart2
-	if (objLoader.LoadModel("TestModels/cart2.obj")) {
-		cart2.ConstructModelFromOBJLoader(objLoader);
-		cart2.InitVBO(myShader);
-
-		carts.push_back(&cart2);
-		cartOffsets.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart3.obj")) {
-		cart3.ConstructModelFromOBJLoader(objLoader);
-		cart3.InitVBO(myShader);
-
-		carts.push_back(&cart3);
-		cartOffsets.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart4.obj")) {
-		cart4.ConstructModelFromOBJLoader(objLoader);
-		cart4.InitVBO(myShader);
-
-		carts.push_back(&cart4);
-		cartOffsets.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart5.obj")) {
-		cart5.ConstructModelFromOBJLoader(objLoader);
-		cart5.InitVBO(myShader);
-
-		carts.push_back(&cart5);
-		cartOffsets.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart6.obj")) {
-		cart6.ConstructModelFromOBJLoader(objLoader);
-		cart6.InitVBO(myShader);
-
-		carts.push_back(&cart6);
-		cartOffsets.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart7.obj")) {
-		cart7.ConstructModelFromOBJLoader(objLoader);
-		cart7.InitVBO(myShader);
-
-		carts.push_back(&cart7);
-		cartOffsets.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart8.obj")) {
-		cart8.ConstructModelFromOBJLoader(objLoader);
-		cart8.InitVBO(myShader);
-
-		carts.push_back(&cart8);
-		cartOffsets.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart9.obj")) {
-		cart9.ConstructModelFromOBJLoader(objLoader);
-		cart9.InitVBO(myShader);
-
-		carts.push_back(&cart9);
-		cartOffsets.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart10.obj")) {
-		cart10.ConstructModelFromOBJLoader(objLoader);
-		cart10.InitVBO(myShader);
-
-		carts.push_back(&cart10);
-		cartOffsets.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart11.obj")) {
-		cart11.ConstructModelFromOBJLoader(objLoader);
-		cart11.InitVBO(myShader);
-
-		carts.push_back(&cart11);
-		cartOffsets.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart12.obj")) {
-		cart12.ConstructModelFromOBJLoader(objLoader);
-		cart12.InitVBO(myShader);
-
-		carts.push_back(&cart12);
-		cartOffsets.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart13.obj")) {
-		cart13.ConstructModelFromOBJLoader(objLoader);
-		cart13.InitVBO(myShader);
-
-		carts.push_back(&cart13);
-		cartOffsets.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart14.obj")) {
-		cart14.ConstructModelFromOBJLoader(objLoader);
-		cart14.InitVBO(myShader);
-
-		carts.push_back(&cart14);
-		cartOffsets.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
-	}
-
-	if (objLoader.LoadModel("TestModels/cart15.obj")) {
-		cart15.ConstructModelFromOBJLoader(objLoader);
-		cart15.InitVBO(myShader);
-
-		carts.push_back(&cart15);
-		cartOffsets.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
-	}
-	if (objLoader.LoadModel("TestModels/cart16.obj")) {
-		cart16.ConstructModelFromOBJLoader(objLoader);
-		cart16.InitVBO(myShader);
-
-		carts.push_back(&cart16);
-		cartOffsets.push_back(glm::vec3(295.0f, 716.0f, 0.0f));
-	}
-
-
-	glutSetCursor(GLUT_CURSOR_NONE);
 }
 
 void keyboard(unsigned char key, int x, int y)
