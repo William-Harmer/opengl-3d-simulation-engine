@@ -691,7 +691,7 @@ void keyboard(unsigned char key, int x, int y)
 	else if (key == '5') currentCameraMode = FIXED_CAMERA_3;
 
 
-	if (key == '6') {
+	if (key == 'r') {
 		// this will cycle 1,2,3,1
 		currentLightMode = LightMode((currentLightMode + 1) % 3);
 	}
