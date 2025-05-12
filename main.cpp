@@ -175,13 +175,10 @@ void init() // Runs once when the program first starts.
         if (objLoader.LoadModel("TestModels/Wheelline" #n ".obj")) { wheelline##n.ConstructModelFromOBJLoader(objLoader); wheelline##n.InitVBO(myShader); } \
         else cout << " model failed to load Wheelline" #n << endl;
 
-		LOAD_WHEEL_LINE(1)  LOAD_WHEEL_LINE(2)  LOAD_WHEEL_LINE(3)  LOAD_WHEEL_LINE(4)
-		LOAD_WHEEL_LINE(5)  LOAD_WHEEL_LINE(6)  LOAD_WHEEL_LINE(7)  LOAD_WHEEL_LINE(8)
-		LOAD_WHEEL_LINE(9)  LOAD_WHEEL_LINE(10) LOAD_WHEEL_LINE(11) LOAD_WHEEL_LINE(12)
-		LOAD_WHEEL_LINE(13) LOAD_WHEEL_LINE(14) LOAD_WHEEL_LINE(15) LOAD_WHEEL_LINE(16)
-		LOAD_WHEEL_LINE(17) LOAD_WHEEL_LINE(18) LOAD_WHEEL_LINE(19) LOAD_WHEEL_LINE(20)
-		LOAD_WHEEL_LINE(21) LOAD_WHEEL_LINE(22) LOAD_WHEEL_LINE(23) LOAD_WHEEL_LINE(24)
-		LOAD_WHEEL_LINE(25) LOAD_WHEEL_LINE(26) LOAD_WHEEL_LINE(27) LOAD_WHEEL_LINE(28)
+		LOAD_WHEEL_LINE(1)  LOAD_WHEEL_LINE(2)  LOAD_WHEEL_LINE(3)  LOAD_WHEEL_LINE(4) LOAD_WHEEL_LINE(5)  LOAD_WHEEL_LINE(6)  LOAD_WHEEL_LINE(7)  
+		LOAD_WHEEL_LINE(8) LOAD_WHEEL_LINE(9)  LOAD_WHEEL_LINE(10) LOAD_WHEEL_LINE(11) LOAD_WHEEL_LINE(12) LOAD_WHEEL_LINE(13) LOAD_WHEEL_LINE(14) 
+		LOAD_WHEEL_LINE(15) LOAD_WHEEL_LINE(16) LOAD_WHEEL_LINE(17) LOAD_WHEEL_LINE(18) LOAD_WHEEL_LINE(19) LOAD_WHEEL_LINE(20) LOAD_WHEEL_LINE(21) 
+		LOAD_WHEEL_LINE(22) LOAD_WHEEL_LINE(23) LOAD_WHEEL_LINE(24) LOAD_WHEEL_LINE(25) LOAD_WHEEL_LINE(26) LOAD_WHEEL_LINE(27) LOAD_WHEEL_LINE(28)
 		LOAD_WHEEL_LINE(29) LOAD_WHEEL_LINE(30) LOAD_WHEEL_LINE(31) LOAD_WHEEL_LINE(32)
 
 	#undef LOAD_WHEEL_LINE
@@ -190,10 +187,9 @@ void init() // Runs once when the program first starts.
         if (objLoader.LoadModel("TestModels/Innerrect" #n ".obj")) { innerrect##n.ConstructModelFromOBJLoader(objLoader); innerrect##n.InitVBO(myShader); } \
         else cout << " model failed to load Innerrect" #n << endl;
 
-		LOAD_INNER_RECT(1)  LOAD_INNER_RECT(2)  LOAD_INNER_RECT(3)  LOAD_INNER_RECT(4)
-		LOAD_INNER_RECT(5)  LOAD_INNER_RECT(6)  LOAD_INNER_RECT(7)  LOAD_INNER_RECT(8)
-		LOAD_INNER_RECT(9)  LOAD_INNER_RECT(10) LOAD_INNER_RECT(11) LOAD_INNER_RECT(12)
-		LOAD_INNER_RECT(13) LOAD_INNER_RECT(14) LOAD_INNER_RECT(15) LOAD_INNER_RECT(16)
+		LOAD_INNER_RECT(1)  LOAD_INNER_RECT(2)  LOAD_INNER_RECT(3)  LOAD_INNER_RECT(4) LOAD_INNER_RECT(5)  LOAD_INNER_RECT(6)  LOAD_INNER_RECT(7)  
+		LOAD_INNER_RECT(8) LOAD_INNER_RECT(9)  LOAD_INNER_RECT(10) LOAD_INNER_RECT(11) LOAD_INNER_RECT(12) LOAD_INNER_RECT(13) LOAD_INNER_RECT(14) 
+		LOAD_INNER_RECT(15) LOAD_INNER_RECT(16)
 
 	#undef LOAD_INNER_RECT
 
@@ -230,8 +226,7 @@ void init() // Runs once when the program first starts.
 	}
 
 	// Loading the cart models with their coordinates.
-
-	// Cart1
+	// Cart1. This one is split in half for when you are in the cart.
 	if (objLoader.LoadModel("TestModels/cart1.obj")) {
 		cart1.ConstructModelFromOBJLoader(objLoader);
 		cart1.InitVBO(myShader);
@@ -246,7 +241,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
 	}
 
-	// Cart2
+	// Cart2.
 	if (objLoader.LoadModel("TestModels/cart2.obj")) {
 		cart2.ConstructModelFromOBJLoader(objLoader);
 		cart2.InitVBO(myShader);
@@ -255,7 +250,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
 	}
 
-	// Cart3
+	// Cart3.
 	if (objLoader.LoadModel("TestModels/cart3.obj")) {
 		cart3.ConstructModelFromOBJLoader(objLoader);
 		cart3.InitVBO(myShader);
@@ -263,7 +258,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
 	}
 
-	// Cart4
+	// Cart4.
 	if (objLoader.LoadModel("TestModels/cart4.obj")) {
 		cart4.ConstructModelFromOBJLoader(objLoader);
 		cart4.InitVBO(myShader);
@@ -271,7 +266,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
 	}
 
-	// Cart 5
+	// Cart 5.
 	if (objLoader.LoadModel("TestModels/cart5.obj")) {
 		cart5.ConstructModelFromOBJLoader(objLoader);
 		cart5.InitVBO(myShader);
@@ -280,7 +275,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
 	}
 
-	// Cart 6
+	// Cart 6.
 	if (objLoader.LoadModel("TestModels/cart6.obj")) {
 		cart6.ConstructModelFromOBJLoader(objLoader);
 		cart6.InitVBO(myShader);
@@ -288,7 +283,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
 	}
 
-	// Cart 7
+	// Cart 7.
 	if (objLoader.LoadModel("TestModels/cart7.obj")) {
 		cart7.ConstructModelFromOBJLoader(objLoader);
 		cart7.InitVBO(myShader);
@@ -296,7 +291,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
 	}
 
-	// Cart 8
+	// Cart 8.
 	if (objLoader.LoadModel("TestModels/cart8.obj")) {
 		cart8.ConstructModelFromOBJLoader(objLoader);
 		cart8.InitVBO(myShader);
@@ -304,7 +299,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
 	}
 
-	// Cart 9
+	// Cart 9.
 	if (objLoader.LoadModel("TestModels/cart9.obj")) {
 		cart9.ConstructModelFromOBJLoader(objLoader);
 		cart9.InitVBO(myShader);
@@ -312,7 +307,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
 	}
 
-	// Cart 10
+	// Cart 10.
 	if (objLoader.LoadModel("TestModels/cart10.obj")) {
 		cart10.ConstructModelFromOBJLoader(objLoader);
 		cart10.InitVBO(myShader);
@@ -320,7 +315,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
 	}
 
-	// Cart 11
+	// Cart 11.
 	if (objLoader.LoadModel("TestModels/cart11.obj")) {
 		cart11.ConstructModelFromOBJLoader(objLoader);
 		cart11.InitVBO(myShader);
@@ -328,7 +323,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
 	}
 
-	// Cart 12
+	// Cart 12.
 	if (objLoader.LoadModel("TestModels/cart12.obj")) {
 		cart12.ConstructModelFromOBJLoader(objLoader);
 		cart12.InitVBO(myShader);
@@ -336,7 +331,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
 	}
 
-	// Cart 13
+	// Cart 13.
 	if (objLoader.LoadModel("TestModels/cart13.obj")) {
 		cart13.ConstructModelFromOBJLoader(objLoader);
 		cart13.InitVBO(myShader);
@@ -344,7 +339,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
 	}
 
-	// Cart 14
+	// Cart 14.
 	if (objLoader.LoadModel("TestModels/cart14.obj")) {
 		cart14.ConstructModelFromOBJLoader(objLoader);
 		cart14.InitVBO(myShader);
@@ -352,7 +347,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
 	}
 
-	// Cart 15
+	// Cart 15.
 	if (objLoader.LoadModel("TestModels/cart15.obj")) {
 		cart15.ConstructModelFromOBJLoader(objLoader);
 		cart15.InitVBO(myShader);
@@ -360,7 +355,7 @@ void init() // Runs once when the program first starts.
 		cartOffsets.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
 	}
 
-	// Cart 16
+	// Cart 16.
 	if (objLoader.LoadModel("TestModels/cart16.obj")) {
 		cart16.ConstructModelFromOBJLoader(objLoader);
 		cart16.InitVBO(myShader);
