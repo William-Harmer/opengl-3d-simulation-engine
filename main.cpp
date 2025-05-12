@@ -176,17 +176,17 @@ void display()
 		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA) {
-		glm::vec3 fixedPos = glm::vec3(2000.0f, 20.0f, 2000.0f);
-		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 fixedPos = glm::vec3(0.0, -895.317f, 1585.21f);
+		glm::vec3 fixedTarget = glm::vec3(0.0f, -150.0f, 0.0f);
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA_2) {
-		glm::vec3 fixedPos = glm::vec3(2000.0f, 100.0f, 2000.0f);
+		glm::vec3 fixedPos = glm::vec3(1561.35f, 785.457f, 1831.77f);
 		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA_3) {
-		glm::vec3 fixedPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);
+		glm::vec3 fixedPos = glm::vec3(-1268.08f, -952.372f, -1726.81f);
 		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
 	}
