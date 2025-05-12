@@ -1,4 +1,4 @@
-#include <iostream>
+Ôªø#include <iostream>
 #include <string>
 using namespace std;
 
@@ -109,13 +109,14 @@ bool keyState[256] = { false };
 
 // Array that holds the carts.
 std::vector<CThreeDModel*> carts;
-std::vector<glm::vec3> cartOffsets;
+std::vector<glm::vec3> cartOriginLocations;
 
 // Buffer distance for collision.
 const float COLLISION_MARGIN = 3.0f;
 
 glm::mat4 ProjectionMatrix;
 glm::mat4 ModelViewMatrix;
+glm::mat4 view; // Create the view matrix. Will eventually hold the position and orientation of the camera.
 
 // FUNCTIONS ------------------------------------------------------------------------------------------------------------------------------------------------
 void init() // Runs once when the program first starts.
@@ -231,14 +232,14 @@ void init() // Runs once when the program first starts.
 		cart1.ConstructModelFromOBJLoader(objLoader);
 		cart1.InitVBO(myShader);
 		carts.push_back(&cart1);
-		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
 	}
 
 	if (objLoader.LoadModel("TestModels/cart1Top.obj")) {
 		cart1Top.ConstructModelFromOBJLoader(objLoader);
 		cart1Top.InitVBO(myShader);
 		carts.push_back(&cart1Top);
-		cartOffsets.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(0.0f, 776.0f, 0.0f));
 	}
 
 	// Cart2.
@@ -247,7 +248,7 @@ void init() // Runs once when the program first starts.
 		cart2.InitVBO(myShader);
 
 		carts.push_back(&cart2);
-		cartOffsets.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
+		cartOriginLocations.push_back(glm::vec3(-295.0f, 716.0f, 00.0f));
 	}
 
 	// Cart3.
@@ -255,7 +256,7 @@ void init() // Runs once when the program first starts.
 		cart3.ConstructModelFromOBJLoader(objLoader);
 		cart3.InitVBO(myShader);
 		carts.push_back(&cart3);
-		cartOffsets.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
+		cartOriginLocations.push_back(glm::vec3(-547.0f, 550.0f, 00.0f));
 	}
 
 	// Cart4.
@@ -263,7 +264,7 @@ void init() // Runs once when the program first starts.
 		cart4.ConstructModelFromOBJLoader(objLoader);
 		cart4.InitVBO(myShader);
 		carts.push_back(&cart4);
-		cartOffsets.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(-716.0f, 297.0f, 0.0f));
 	}
 
 	// Cart 5.
@@ -272,7 +273,7 @@ void init() // Runs once when the program first starts.
 		cart5.InitVBO(myShader);
 
 		carts.push_back(&cart5);
-		cartOffsets.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(-776.0f, 1.0f, 0.0f));
 	}
 
 	// Cart 6.
@@ -280,7 +281,7 @@ void init() // Runs once when the program first starts.
 		cart6.ConstructModelFromOBJLoader(objLoader);
 		cart6.InitVBO(myShader);
 		carts.push_back(&cart6);
-		cartOffsets.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(-715.0f, -295.0f, 0.0f));
 	}
 
 	// Cart 7.
@@ -288,7 +289,7 @@ void init() // Runs once when the program first starts.
 		cart7.ConstructModelFromOBJLoader(objLoader);
 		cart7.InitVBO(myShader);
 		carts.push_back(&cart7);
-		cartOffsets.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(-547.0f, -548.0f, 0.0f));
 	}
 
 	// Cart 8.
@@ -296,7 +297,7 @@ void init() // Runs once when the program first starts.
 		cart8.ConstructModelFromOBJLoader(objLoader);
 		cart8.InitVBO(myShader);
 		carts.push_back(&cart8);
-		cartOffsets.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(-300.0f, -715.0f, 0.0f));
 	}
 
 	// Cart 9.
@@ -304,7 +305,7 @@ void init() // Runs once when the program first starts.
 		cart9.ConstructModelFromOBJLoader(objLoader);
 		cart9.InitVBO(myShader);
 		carts.push_back(&cart9);
-		cartOffsets.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(0.0f, -776.0f, 0.0f));
 	}
 
 	// Cart 10.
@@ -312,7 +313,7 @@ void init() // Runs once when the program first starts.
 		cart10.ConstructModelFromOBJLoader(objLoader);
 		cart10.InitVBO(myShader);
 		carts.push_back(&cart10);
-		cartOffsets.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(300.0f, -715.0f, 0.0f));
 	}
 
 	// Cart 11.
@@ -320,7 +321,7 @@ void init() // Runs once when the program first starts.
 		cart11.ConstructModelFromOBJLoader(objLoader);
 		cart11.InitVBO(myShader);
 		carts.push_back(&cart11);
-		cartOffsets.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(547.0f, -548.0f, 0.0f));
 	}
 
 	// Cart 12.
@@ -328,7 +329,7 @@ void init() // Runs once when the program first starts.
 		cart12.ConstructModelFromOBJLoader(objLoader);
 		cart12.InitVBO(myShader);
 		carts.push_back(&cart12);
-		cartOffsets.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(715.0f, -295.0f, 0.0f));
 	}
 
 	// Cart 13.
@@ -336,7 +337,7 @@ void init() // Runs once when the program first starts.
 		cart13.ConstructModelFromOBJLoader(objLoader);
 		cart13.InitVBO(myShader);
 		carts.push_back(&cart13);
-		cartOffsets.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(776.0f, 1.0f, 0.0f));
 	}
 
 	// Cart 14.
@@ -344,7 +345,7 @@ void init() // Runs once when the program first starts.
 		cart14.ConstructModelFromOBJLoader(objLoader);
 		cart14.InitVBO(myShader);
 		carts.push_back(&cart14);
-		cartOffsets.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(716.0f, 297.0f, 0.0f));
 	}
 
 	// Cart 15.
@@ -352,7 +353,7 @@ void init() // Runs once when the program first starts.
 		cart15.ConstructModelFromOBJLoader(objLoader);
 		cart15.InitVBO(myShader);
 		carts.push_back(&cart15);
-		cartOffsets.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(547.0f, 550.0f, 0.0f));
 	}
 
 	// Cart 16.
@@ -360,80 +361,79 @@ void init() // Runs once when the program first starts.
 		cart16.ConstructModelFromOBJLoader(objLoader);
 		cart16.InitVBO(myShader);
 		carts.push_back(&cart16);
-		cartOffsets.push_back(glm::vec3(295.0f, 716.0f, 0.0f));
+		cartOriginLocations.push_back(glm::vec3(295.0f, 716.0f, 0.0f));
 	}
 }
 
 
-void display()
+void display() // Repeatively runs.
 {
-	 //std::cout 
-  //      << "cameraPos: (" 
-  //      << cameraPos.x << ", " 
-  //      << cameraPos.y << ", " 
-  //      << cameraPos.z << ")\n";
-
-
-	// Clear screen and depth buffer
+	// Clear screen and depth buffer so that when the new values are put in the buffer it doesnt corrupt the data.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// Draw any octrees for debugging.
+	//wheelringfront1.DrawOctreeLeaves(myShader);
+	//centerblock.DrawOctreeLeaves(myShader);
 
-	// Use our shader
+	// Print the camera position for debugging.
+	//std::cout << "cameraPos: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")\n";
+
+	// Use our shader.
 	GLuint prog = myShader->GetProgramObjID();
 	glUseProgram(prog);
 
-	// --- Projection matrix ---
-	glUniformMatrix4fv(
-		glGetUniformLocation(prog, "ProjectionMatrix"),
-		1, GL_FALSE,
-		glm::value_ptr(ProjectionMatrix)
-	);
-
-	// --- View matrix (camera) ---
-	glm::mat4 view;
+	// Sending the projection matrix to the GPU and applying it to my shader?
+	// Projection matrix maps view-space into clip-space using perspective or ortho; later pipeline stages flatten to 2D.
+	// Not sure what clip space is exactly though.
+	glUniformMatrix4fv(glGetUniformLocation(prog, "ProjectionMatrix"),1, GL_FALSE,glm::value_ptr(ProjectionMatrix));
 
 	if (currentCameraMode == FREE_CAMERA) {
-		view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		view = glm::lookAt(cameraPos, cameraTarget, cameraUp); // These values are adjusted based on the keyboard presses and mouse movement.
 	}
 	else if (currentCameraMode == FIXED_CAMERA) {
-		glm::vec3 fixedPos = glm::vec3(0.0, -895.317f, 1585.21f);
-		glm::vec3 fixedTarget = glm::vec3(0.0f, -150.0f, 0.0f);
-		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+		glm::vec3 pos = glm::vec3(0.0, -895.317f, 1585.21f);
+		glm::vec3 lookingAt = glm::vec3(0.0f, -150.0f, 0.0f);
+		view = glm::lookAt(pos, lookingAt, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA_2) {
-		glm::vec3 fixedPos = glm::vec3(1561.35f, 785.457f, 1831.77f);
-		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+		glm::vec3 pos = glm::vec3(1561.35f, 785.457f, 1831.77f);
+		glm::vec3 lookingAt = glm::vec3(0.0f, 0.0f, 0.0f);
+		view = glm::lookAt(pos, lookingAt, cameraUp);
 	}
 	else if (currentCameraMode == FIXED_CAMERA_3) {
-		glm::vec3 fixedPos = glm::vec3(-1268.08f, -952.372f, -1726.81f);
-		glm::vec3 fixedTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		view = glm::lookAt(fixedPos, fixedTarget, cameraUp);
+		glm::vec3 pos = glm::vec3(-1268.08f, -952.372f, -1726.81f);
+		glm::vec3 lookingAt = glm::vec3(0.0f, 0.0f, 0.0f);
+		view = glm::lookAt(pos, lookingAt, cameraUp);
 	}
 	else if (currentCameraMode == CART_CAMERA) {
-		// --- 1) recompute the wheel rotation used for all carts ---
-		glm::mat4 rotM = glm::rotate(
-			glm::mat4(1.0f),
-			glm::radians(wheelRotationAngle),
-			glm::vec3(0.0f, 0.0f, 1.0f)
+	
+		// Recreate the rotation matrix that the carts do.
+		glm::mat4 rotation = glm::rotate(
+			glm::mat4(1.0f),					// Start with identity.
+			glm::radians(wheelRotationAngle),	// How far to rotate.
+			glm::vec3(0.0f, 0.0f, 1.0f)			// Around the z-axis.
 		);
 
-		// --- 2) get cart1ís world position via its baked-in offset ---
-		glm::vec3 bakedOffset = cartOffsets[0];
-		glm::vec3 cartWorldPos = glm::vec3(rotM * glm::vec4(bakedOffset, 1.0f));
+		glm::vec3 cartOriginalLocation = cartOriginLocations[0]; // Get cart1's origin location.
 
-		// --- 3) compute look-direction from yaw/pitch (same math as mouse) ---
-		glm::vec3 front;
-		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front.y = sin(glm::radians(pitch));
-		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front = glm::normalize(front);
+		// Apply the rotation to the original position to get the world position.
+		glm::vec3 cartWorldPos = glm::vec3(rotation * glm::vec4(cartOriginalLocation, 1.0f));
 
-		// --- 4) camera sits at cart + offset, looking out along front ---
-		glm::vec3 camPos = cartWorldPos + cartCamOffset;
-		glm::vec3 camTarget = camPos + front;
-		view = glm::lookAt(camPos, camTarget, cameraUp);
+		// Allow moving around with the mouse.
+		// Yaw, left and right. œï.
+		// Pitch, up and down. Œ∏.
+		// Need to convert the yaw and pitch info into a vector.
+		// https://math.stackexchange.com/questions/2618527/converting-from-yaw-pitch-roll-to-vector
+		glm::vec3 lookAt;
+		lookAt.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		lookAt.y = sin(glm::radians(pitch));
+		lookAt.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		// Now we have a direction vector.
+
+		glm::vec3 camPos = cartWorldPos + cartCamOffset; // Add the offset so they are on the seat of the cart.
+		glm::vec3 camTarget = camPos + lookAt; // Make the direction vector apply to actual coords of where to look at.
+		view = glm::lookAt(camPos, camTarget, cameraUp); // Adjust the camera accordingly.
 	}
-
 
 	glUniformMatrix4fv(
 		glGetUniformLocation(prog, "ViewMatrix"),
@@ -497,14 +497,6 @@ void display()
 	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
 	drawRot(centerstar);
 
-
-
-	//centerstar.DrawOctreeLeaves(myShader);
-	//wheelringfront1.DrawOctreeLeaves(myShader);
-	//wheelringfront1.DrawOctreeLeaves(myShader);
-	//wheelringfront2.DrawOctreeLeaves(myShader);
-	//innerwheelring1.DrawOctreeLeaves(myShader);
-
 	// --- Draw bottompart (static) ---
 	{
 		glm::mat4 mv = view * glm::mat4(1.0f);
@@ -540,7 +532,7 @@ void display()
 		//centerblock.DrawOctreeLeaves(myShader);
 	}
 
-	// --- Draw stands 1ñ4 (static) ---
+	// --- Draw stands 1‚Äì4 (static) ---
 	{
 		glm::mat4 mv = view * glm::mat4(1.0f);
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
@@ -560,8 +552,8 @@ void display()
 		stand4.DrawElementsUsingVBO(myShader);
 	}
 
-	// óóó Blinking glow for all lights óóó
-		// óóó Light glow for all lights óóó
+	// ‚Äî‚Äî‚Äî Blinking glow for all lights ‚Äî‚Äî‚Äî
+		// ‚Äî‚Äî‚Äî Light glow for all lights ‚Äî‚Äî‚Äî
 	int elapsed = glutGet(GLUT_ELAPSED_TIME);
 	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
 	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
@@ -589,7 +581,7 @@ void display()
 	case LIGHT_SEQ:
 	{
 		const int SIDE_COUNT = 16;
-		// which ìheadî weíre at this frame
+		// which ‚Äúhead‚Äù we‚Äôre at this frame
 		int step = (elapsed / SEQ_STEP_DURATION) % SIDE_COUNT;
 		// how far apart each of the SEQ_LIGHT_COUNT lights should be
 		int offset = SIDE_COUNT / SEQ_LIGHT_COUNT; // 16/3 == 5
@@ -616,13 +608,13 @@ void display()
 
 	}
 
-	// restore specular & shininess so scene isnít tinted
+	// restore specular & shininess so scene isn‚Äôt tinted
 	glUniform4fv(locEmit, 1, glm::value_ptr(emitOff));
 	glUniform4fv(locSpecular, 1, Material_Specular);
 	glUniform1f(locShininess, Material_Shininess);
 
 
-	// óóó end blinking glow óóó
+	// ‚Äî‚Äî‚Äî end blinking glow ‚Äî‚Äî‚Äî
 
 
 
@@ -630,11 +622,11 @@ void display()
 	for (size_t i = 0; i < carts.size(); ++i) {
 		CThreeDModel* cart = carts[i];
 
-		// if weíre in cart camera mode, skip the top of cart1
+		// if we‚Äôre in cart camera mode, skip the top of cart1
 		if (currentCameraMode == CART_CAMERA && cart == &cart1Top)
 			continue;
 
-		const glm::vec3& offset = cartOffsets[i];
+		const glm::vec3& offset = cartOriginLocations[i];
 		glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(offset, 1.0f));
 		glm::vec3 deltaPos = rotatedPos - offset;
 
@@ -699,7 +691,7 @@ void specialUp(int key, int x, int y)
 // returns true if worldPos is inside *any* of your meshes
 bool CheckCollision(const glm::vec3& worldPos) {
 
-	// 1) prepare the inverted rotation for all the wheelís spinning parts
+	// 1) prepare the inverted rotation for all the wheel‚Äôs spinning parts
 	glm::mat4 rotM = glm::rotate(glm::mat4(1.0f),
 		glm::radians(wheelRotationAngle),
 		glm::vec3(0, 0, 1));
@@ -740,7 +732,7 @@ bool CheckCollision(const glm::vec3& worldPos) {
 			return true;
 	}
 
-	// C) lights (blinking spheres) ñ treat them like any other mesh
+	// C) lights (blinking spheres) ‚Äì treat them like any other mesh
 	for (auto& L : lights) {
 		// if your lights only rotate, you may need the same invRotM transformation:
 		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
@@ -754,7 +746,7 @@ bool CheckCollision(const glm::vec3& worldPos) {
 	for (size_t i = 0; i < carts.size(); ++i) {
 		CThreeDModel* cart = carts[i];
 
-		const glm::vec3& offset = cartOffsets[i];
+		const glm::vec3& offset = cartOriginLocations[i];
 
 		// where the pivot sent this cart this frame:
 		glm::vec3 rotatedPos = glm::vec3(rotM * glm::vec4(offset, 1.0f));
