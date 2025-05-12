@@ -123,6 +123,21 @@ std::vector<glm::vec3> cartOffsets;
 
 glm::vec3 cartCamOffset = glm::vec3(-30.0f, -70.0f, 0.0f);
 
+// ?? Light?mode state ????????????????????????????????
+enum LightMode {
+	LIGHT_SOLID = 0,
+	LIGHT_BLINK = 1,
+	LIGHT_SEQ = 2
+};
+LightMode currentLightMode = LIGHT_SOLID;  // start in blinking mode
+// —— Sequential chase settings ——
+// How many lights to light up at once:
+const int SEQ_LIGHT_COUNT = 5;
+// How many milliseconds between each step:
+const int SEQ_STEP_DURATION = 150;
+
+
+
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()
 {
@@ -325,23 +340,62 @@ void display()
 	}
 
 	// ——— Blinking glow for all lights ———
+		// ——— Light glow for all lights ———
 	int elapsed = glutGet(GLUT_ELAPSED_TIME);
-	bool blink = ((elapsed / 300) % 2) == 0;
-	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f), emitOff(0.0f);
 	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
 	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
 	static GLint locShininess = glGetUniformLocation(prog, "material_shininess");
+	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f), emitOff(0.0f);
 
-	// turn glow on
-	glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
-	glUniform4f(locSpecular, 1, 1, 1, 1);
-	glUniform1f(locShininess, 128.0f);
+	switch (currentLightMode) {
+	case LIGHT_SOLID:
+		// All lights on
+		glUniform4fv(locEmit, 1, glm::value_ptr(emitOn));
+		for (auto& L : lights)
+			drawRot(L);
+		break;
 
-	// draw each light
-	for (auto& L : lights)
-		drawRot(L);
+	case LIGHT_BLINK:
+	{
+		// All lights toggle on/off every 300ms
+		bool blink = ((elapsed / 300) % 2) == 0;
+		glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
+		for (auto& L : lights)
+			drawRot(L);
+		break;
+	}
 
-	// reset glow & specular so the rest of the scene isn’t affected
+	case LIGHT_SEQ:
+	{
+		const int SIDE_COUNT = 16;
+		// which “head” we’re at this frame
+		int step = (elapsed / SEQ_STEP_DURATION) % SIDE_COUNT;
+		// how far apart each of the SEQ_LIGHT_COUNT lights should be
+		int offset = SIDE_COUNT / SEQ_LIGHT_COUNT; // 16/3 == 5
+
+		for (int i = 0; i < (int)lights.size(); ++i) {
+			// map [0..lights.size()) ? [0..15] per side
+			int sideIndex = (i < SIDE_COUNT) ? i : (i - SIDE_COUNT);
+
+			// turn on if this index matches any of the 3 evenly?spaced positions
+			bool on = false;
+			for (int k = 0; k < SEQ_LIGHT_COUNT; ++k) {
+				if (sideIndex == (step + k * offset) % SIDE_COUNT) {
+					on = true;
+					break;
+				}
+			}
+
+			glUniform4fv(locEmit, 1, glm::value_ptr(on ? emitOn : emitOff));
+			drawRot(lights[i]);
+		}
+		break;
+	}
+
+
+	}
+
+	// restore specular & shininess so scene isn’t tinted
 	glUniform4fv(locEmit, 1, glm::value_ptr(emitOff));
 	glUniform4fv(locSpecular, 1, Material_Specular);
 	glUniform1f(locShininess, Material_Shininess);
@@ -635,6 +689,13 @@ void keyboard(unsigned char key, int x, int y)
 	else if (key == '3') currentCameraMode = FIXED_CAMERA;
 	else if (key == '4') currentCameraMode = FIXED_CAMERA_2;
 	else if (key == '5') currentCameraMode = FIXED_CAMERA_3;
+
+
+	if (key == '6') {
+		// this will cycle 1,2,3,1
+		currentLightMode = LightMode((currentLightMode + 1) % 3);
+	}
+
 }
 
 void keyboardUp(unsigned char key, int x, int y)
