@@ -2,12 +2,12 @@
 #include <string>
 using namespace std;
 
-//--- OpenGL ---
+// OpenGL
 #include "GL/glew.h"
 #include "GL/wglew.h"
 #pragma comment(lib, "glew32.lib")
-//--------------
 
+// GLM
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
