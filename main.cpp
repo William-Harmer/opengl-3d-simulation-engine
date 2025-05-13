@@ -89,13 +89,13 @@ float lastX = screenWidth / 2.0f;
 float lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
-//Material properties.
+// Material properties.
 float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 float Material_Diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
 float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
 float Material_Shininess = 50;
 
-//Light Properties.
+// Light Properties.
 float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
 float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
@@ -382,9 +382,7 @@ void display() // Repeatively runs.
 	GLuint prog = myShader->GetProgramObjID();
 	glUseProgram(prog);
 
-	// Sending the projection matrix to the GPU and applying it to my shader?
-	// Projection matrix maps view-space into clip-space using perspective or ortho; later pipeline stages flatten to 2D.
-	// Not sure what clip space is exactly though.
+	// Send projection matrix into the bound shader?
 	glUniformMatrix4fv(glGetUniformLocation(prog, "ProjectionMatrix"),1, GL_FALSE,glm::value_ptr(ProjectionMatrix));
 
 	if (currentCameraMode == FREE_CAMERA) {
@@ -435,125 +433,86 @@ void display() // Repeatively runs.
 		view = glm::lookAt(camPos, camTarget, cameraUp); // Adjust the camera accordingly.
 	}
 
-	glUniformMatrix4fv(
-		glGetUniformLocation(prog, "ViewMatrix"),
-		1, GL_FALSE,
-		glm::value_ptr(view)
-	);
+	// Send view matrix from CPU to shader?
+	glUniformMatrix4fv(glGetUniformLocation(prog, "ViewMatrix"),1, GL_FALSE,glm::value_ptr(view));
 
-	// --- Lights ---
+	// Upload light properties from the CPU into shader?
 	glUniform4fv(glGetUniformLocation(prog, "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(prog, "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(prog, "light_diffuse"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(prog, "light_specular"), 1, Light_Specular);
 
-	// --- Material ---
+	// Same for material.
 	glUniform4fv(glGetUniformLocation(prog, "material_ambient"), 1, Material_Ambient);
 	glUniform4fv(glGetUniformLocation(prog, "material_diffuse"), 1, Material_Diffuse);
 	glUniform4fv(glGetUniformLocation(prog, "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(prog, "material_shininess"), Material_Shininess);
 
-	// --- Draw floor ---
+	// DRAW STATIC OBJECTS ----------------------------------------------------------------------------------------------------------------------------------
+	
+	// Can all be done at the same time as their model matrices are the same (identity).
 	{
+		// Model matrix: Object’s local space into world space.
+		// View matrix: Camera world space into camera space. Basically the camera position and where it is looking.
+		// Model view matrix: Object world space to camera space. Says where each object is relative to the camera, maybe that object is not even in the shot.
+		// Every object needs to be converted into camera space and so every object needs a model view matrix.
+
+		// Make model view matrix = view * model.
+		// Only need to times by an identity matrix as the object is static and in the correct position already so we are saying 'apply no extra transform 
+		// as it is already in the right place'.
 		glm::mat4 mv = view * glm::mat4(1.0f);
+
+		// Get the normal matrix.
+		// Needed for correct lighting if the object is non uniform scale I think.
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
+
+		// Upload to the shader
 		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
 		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+
+		// Now draw the objects
 		theFloor.DrawElementsUsingVBO(myShader);
-	}
-
-	// --- Build a single wheel?rotation matrix ---
-	glm::mat4 rotationMatrix = glm::rotate(
-		glm::mat4(1.0f),
-		glm::radians(wheelRotationAngle),
-		glm::vec3(0.0f, 0.0f, 1.0f)
-	);
-
-	// --- Helper to draw any part with that rotation ---
-	auto drawRot = [&](CThreeDModel& m) {
-		glm::mat4 mv = view * rotationMatrix;
-		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
-		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
-		m.DrawElementsUsingVBO(myShader);
-		};
-
-	// --- Draw each rotating piece individually ---
-	drawRot(wheelringfront1);
-	drawRot(wheelringfront2);
-	drawRot(wheelline1);   drawRot(wheelline2);   drawRot(wheelline3);   drawRot(wheelline4);
-	drawRot(wheelline5);   drawRot(wheelline6);   drawRot(wheelline7);   drawRot(wheelline8);
-	drawRot(wheelline9);   drawRot(wheelline10);  drawRot(wheelline11);  drawRot(wheelline12);
-	drawRot(wheelline13);  drawRot(wheelline14);  drawRot(wheelline15);  drawRot(wheelline16);
-	drawRot(wheelline17);  drawRot(wheelline18);  drawRot(wheelline19);  drawRot(wheelline20);
-	drawRot(wheelline21);  drawRot(wheelline22);  drawRot(wheelline23);  drawRot(wheelline24);
-	drawRot(wheelline25);  drawRot(wheelline26);  drawRot(wheelline27);  drawRot(wheelline28);
-	drawRot(wheelline29);  drawRot(wheelline30);  drawRot(wheelline31);  drawRot(wheelline32);
-	drawRot(innerwheelring1);
-	drawRot(innerwheelring2);
-	drawRot(innerrect1);   drawRot(innerrect2);   drawRot(innerrect3);   drawRot(innerrect4);
-	drawRot(innerrect5);   drawRot(innerrect6);   drawRot(innerrect7);   drawRot(innerrect8);
-	drawRot(innerrect9);   drawRot(innerrect10);  drawRot(innerrect11);  drawRot(innerrect12);
-	drawRot(innerrect13);  drawRot(innerrect14);  drawRot(innerrect15);  drawRot(innerrect16);
-	drawRot(centerstar);
-
-	// --- Draw bottompart (static) ---
-	{
-		glm::mat4 mv = view * glm::mat4(1.0f);
-		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(
-			glGetUniformLocation(prog, "NormalMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(nm)
-		);
-		glUniformMatrix4fv(
-			glGetUniformLocation(prog, "ModelViewMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(mv)
-		);
-		bottompart.DrawElementsUsingVBO(myShader);
-	}
-
-	// --- Draw centerblock (static) ---
-	{
-		glm::mat4 mv = view * glm::mat4(1.0f);
-		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(
-			glGetUniformLocation(prog, "NormalMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(nm)
-		);
-		glUniformMatrix4fv(
-			glGetUniformLocation(prog, "ModelViewMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(mv)
-		);
-		centerblock.DrawElementsUsingVBO(myShader);
-		//centerblock.DrawOctreeLeaves(myShader);
-	}
-
-	// --- Draw stands 1–4 (static) ---
-	{
-		glm::mat4 mv = view * glm::mat4(1.0f);
-		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(
-			glGetUniformLocation(prog, "NormalMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(nm)
-		);
-		glUniformMatrix4fv(
-			glGetUniformLocation(prog, "ModelViewMatrix"),
-			1, GL_FALSE,
-			glm::value_ptr(mv)
-		);
 		stand1.DrawElementsUsingVBO(myShader);
 		stand2.DrawElementsUsingVBO(myShader);
 		stand3.DrawElementsUsingVBO(myShader);
 		stand4.DrawElementsUsingVBO(myShader);
+		centerblock.DrawElementsUsingVBO(myShader);
+		bottompart.DrawElementsUsingVBO(myShader);
 	}
+	// DRAW WHEEL ROTATING OBJECTS --------------------------------------------------------------------------------------------------------------------------
 
-	// ——— Blinking glow for all lights ———
-		// ——— Light glow for all lights ———
+	// Build the rotation matrix that will be used for all the wheel pieces.
+	glm::mat4 rotationMatrix = glm::rotate(
+		glm::mat4(1.0f),                  // Start with identity.
+		glm::radians(wheelRotationAngle), // How far to rotate.
+		glm::vec3(0.0f, 0.0f, 1.0f)       // Around the z-axis.
+	);
+
+	// Function that will draw all the rotating parts of the wheel.
+	// [&] means you can capture any variables you need into the scope of the function.
+	auto drawRot = [&](CThreeDModel& m) {
+		// Get the model view matrix = view * model. Remember this time because there is a rotation, we need to times by the model matrix not just by an 
+		// identity matrix. The rotation is around the point 0,0,0 so we don't need to do a translation first to change the pivot point.
+		glm::mat4 mv = view * rotationMatrix;
+		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv)); // Also get the normal matrix.
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		m.DrawElementsUsingVBO(myShader);
+	};
+
+	drawRot(centerstar);
+	drawRot(wheelringfront1); drawRot(wheelringfront2);
+	drawRot(innerwheelring1); drawRot(innerwheelring2);
+	drawRot(wheelline1); drawRot(wheelline2); drawRot(wheelline3); drawRot(wheelline4); drawRot(wheelline5); drawRot(wheelline6); drawRot(wheelline7);
+	drawRot(wheelline8); drawRot(wheelline9); drawRot(wheelline10); drawRot(wheelline11);  drawRot(wheelline12); drawRot(wheelline13); drawRot(wheelline14);
+	drawRot(wheelline15); drawRot(wheelline16); drawRot(wheelline17); drawRot(wheelline18); drawRot(wheelline19); drawRot(wheelline20); drawRot(wheelline21);
+	drawRot(wheelline22); drawRot(wheelline23); drawRot(wheelline24); drawRot(wheelline25); drawRot(wheelline26); drawRot(wheelline27); drawRot(wheelline28);
+	drawRot(wheelline29); drawRot(wheelline30); drawRot(wheelline31); drawRot(wheelline32);
+	drawRot(innerrect1); drawRot(innerrect2); drawRot(innerrect3); drawRot(innerrect4); drawRot(innerrect5); drawRot(innerrect6); drawRot(innerrect7);
+	drawRot(innerrect8); drawRot(innerrect9); drawRot(innerrect10); drawRot(innerrect11); drawRot(innerrect12); drawRot(innerrect13); drawRot(innerrect14); 
+	drawRot(innerrect15); drawRot(innerrect16);
+
+	// DRAW LIGHTS ------------------------------------------------------------------------------------------------------------------------------------------
 	int elapsed = glutGet(GLUT_ELAPSED_TIME);
 	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
 	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
@@ -613,12 +572,7 @@ void display() // Repeatively runs.
 	glUniform4fv(locSpecular, 1, Material_Specular);
 	glUniform1f(locShininess, Material_Shininess);
 
-
-	// ——— end blinking glow ———
-
-
-
-
+	//  DRAW CART -------------------------------------------------------------------------------------------------------------------------------------------
 	for (size_t i = 0; i < carts.size(); ++i) {
 		CThreeDModel* cart = carts[i];
 
