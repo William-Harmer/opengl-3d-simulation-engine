@@ -878,10 +878,10 @@ void CThreeDModel::DeleteVertexFaceData()
 
 bool CThreeDModel::IsPointInLeaf(double x, double y, double z)
 {
-	// make sure the octree exists
+	// make sure the octree exists.
 	if (m_pobOctree == nullptr) {
 		ConstructOctree();
 	}
-	// just forward to the octree’s method
+	// just forward to the octree’s method.
 	return m_pobOctree->IsPointInLeaf(x, y, z);
 }

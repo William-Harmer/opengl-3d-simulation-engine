@@ -646,27 +646,29 @@ void COctree::CalcVertexNormals(CThreeDModel* model)
 bool COctree::IsPointInLeaf(double x, double y, double z) const
 {
 
-	// 1) If the point is outside this node’s AABB at all, it can’t be in any leaf here.
+	// If the point is outside.
 	if (x < m_dMinX || x > m_dMaxX ||
 		y < m_dMinY || y > m_dMaxY ||
 		z < m_dMinZ || z > m_dMaxZ)
-		return false;
+		return false; 	// Immediately return false;
 
-	// 2) If this node is a leaf, and the point is inside its AABB, we’ve found it.
+	// If we are at the maximum depth then it is a collision.
 	if (m_iLevel >= MAX_DEPTH)
 		return true;
 
-	// 3) Otherwise, figure out which child?octant the point falls into.
+	// Otherwise, figure out which child?octant the point falls into.
+	// So get the middle of the bounding box.
 	double midX = (m_dMinX + m_dMaxX) * 0.5;
 	double midY = (m_dMinY + m_dMaxY) * 0.5;
 	double midZ = (m_dMinZ + m_dMaxZ) * 0.5;
 
-	// Child index bit?packing: bit2 = x ? midX, bit1 = y ? midY, bit0 = z ? midZ
-	int idx = (x >= midX ? 4 : 0)
+	// Figure out which of my 8 subcubes does my point live in.
+	int idx = (x >= midX ? 4 : 0) // If x is greater than the middle point of x set idx as 4.
 		| (y >= midY ? 2 : 0)
 		| (z >= midZ ? 1 : 0);
+	// And remember it is a or, so we get 8 different combinations to get the right index e.g. 4 | 0 | 1 is index 5.
 
-	// 4) If that child exists, recurse; otherwise the point doesn’t lie in any filled leaf.
+	// If that child exists, recurse; otherwise the point doesn’t lie in any filled leaf.
 	if (m_pobChildren[idx])
 		return m_pobChildren[idx]->IsPointInLeaf(x, y, z);
 

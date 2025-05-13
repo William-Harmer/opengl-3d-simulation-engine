@@ -114,6 +114,9 @@ std::vector<glm::vec3> cartOriginLocations;
 // Buffer distance for collision.
 const float COLLISION_MARGIN = 3.0f;
 
+// Mouse sens
+const float sensitivity = 0.1f;
+
 glm::mat4 ProjectionMatrix;
 glm::mat4 ModelViewMatrix;
 glm::mat4 view; // Create the view matrix. Will eventually hold the position and orientation of the camera.
@@ -513,125 +516,216 @@ void display() // Repeatively runs.
 	drawRot(innerrect15); drawRot(innerrect16);
 
 	// DRAW LIGHTS ------------------------------------------------------------------------------------------------------------------------------------------
-	int elapsed = glutGet(GLUT_ELAPSED_TIME);
-	static GLint locEmit = glGetUniformLocation(prog, "material_emission");
-	static GLint locSpecular = glGetUniformLocation(prog, "material_specular");
-	static GLint locShininess = glGetUniformLocation(prog, "material_shininess");
-	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f), emitOff(0.0f);
+	int elapsed = glutGet(GLUT_ELAPSED_TIME); // Gives you the time in ms since you initialized FreeGLUT.
+
+	// get the slot in which these material properties are stored.
+	static GLint emission = glGetUniformLocation(prog, "material_emission");
+
+	// Did try and change the material specular and shininess but didnt make much difference.
+
+	glm::vec4 emitOn(1.0f, 1.0f, 0.2f, 1.0f); // For when the lights are on. RGBA.
+	glm::vec4 emitOff(0.0f); // Off is just nothing.
 
 	switch (currentLightMode) {
 	case LIGHT_SOLID:
-		// All lights on
-		glUniform4fv(locEmit, 1, glm::value_ptr(emitOn));
-		for (auto& L : lights)
+		glUniform4fv(emission, 1, glm::value_ptr(emitOn)); // Set the emission to the emitOn colour.
+		
+		for (auto& L : lights) // Also add the rotation on each of the lights.
 			drawRot(L);
+
 		break;
 
 	case LIGHT_BLINK:
 	{
-		// All lights toggle on/off every 300ms
+		
+		// elapsed / LIGHT_BLINK_DURATION, how many chunks of 300ms have gone by.
+		// % 2, if chunks are even 0, if chunks are odd 1.
 		bool blink = ((elapsed / LIGHT_BLINK_DURATION) % 2) == 0;
-		glUniform4fv(locEmit, 1, glm::value_ptr(blink ? emitOn : emitOff));
+
+		glUniform4fv(emission, 1, glm::value_ptr(blink ? emitOn : emitOff)); // If blink is 1 turn on, if 0 turn off.
+
 		for (auto& L : lights)
 			drawRot(L);
+
 		break;
 	}
 
 	case LIGHT_SEQ:
 	{
-		const int SIDE_COUNT = 16;
-		// which “head” we’re at this frame
-		int step = (elapsed / SEQ_STEP_DURATION) % SIDE_COUNT;
-		// how far apart each of the SEQ_LIGHT_COUNT lights should be
-		int offset = SIDE_COUNT / SEQ_LIGHT_COUNT; // 16/3 == 5
+		const int SIDE_COUNT = 16; // How many lights on one side of the wheel.
 
-		for (int i = 0; i < (int)lights.size(); ++i) {
-			// map [0..lights.size()) ? [0..15] per side
-			int sideIndex = (i < SIDE_COUNT) ? i : (i - SIDE_COUNT);
+		// Determine where the head is.
+		// elapsed / SEQ_STEP_DURATION, how many chunks of SEQ_STEP_DURATION have passed.
+		// % SIDE_COUNT, brings the value in the range 1 - 16.
+		int head = (elapsed / SEQ_STEP_DURATION) % SIDE_COUNT;
 
-			// turn on if this index matches any of the 3 evenly?spaced positions
+		// What should the gap be between each light?
+		int gap = SIDE_COUNT / SEQ_LIGHT_COUNT;
+
+		for (int i = 0; i < (int)lights.size(); ++i) { // For every light.
+
+			// If we are above light 16 deduct 16.
+			// Condition ? valueIfTrue : valueIfFalse.
+			int sideIndex = (i < SIDE_COUNT) ? i : (i - SIDE_COUNT); 
+
 			bool on = false;
-			for (int k = 0; k < SEQ_LIGHT_COUNT; ++k) {
-				if (sideIndex == (step + k * offset) % SIDE_COUNT) {
+			// Find out what lights should be on.
+			for (int k = 0; k < SEQ_LIGHT_COUNT; ++k) { // For the amount of lights we want on at once.
+
+				// (k * gap), makes each of the lights evenly spaced around the ring.
+				// Head is base postion so add (k * gap) so we know what light we should be on.
+				// % SIDE_COUNT make sure it is in the range 0,15 so it will loop back if needed.
+				int litSlot = (head + (k * gap)) % SIDE_COUNT;
+
+				if (sideIndex == litSlot) { // Is light that should be on the same value as this current light?
 					on = true;
 					break;
 				}
 			}
 
-			glUniform4fv(locEmit, 1, glm::value_ptr(on ? emitOn : emitOff));
-			drawRot(lights[i]);
+			glUniform4fv(emission, 1, glm::value_ptr(on ? emitOn : emitOff)); // Set light on if on was true.
+
+			drawRot(lights[i]); // Also rotate that light as well.
 		}
 		break;
 	}
-
-
 	}
 
-	// restore specular & shininess so scene isn’t tinted
-	glUniform4fv(locEmit, 1, glm::value_ptr(emitOff));
-	glUniform4fv(locSpecular, 1, Material_Specular);
-	glUniform1f(locShininess, Material_Shininess);
+	// Restore emission so nothing else is tinted.
+	glUniform4fv(emission, 1, glm::value_ptr(emitOff));
 
-	//  DRAW CART -------------------------------------------------------------------------------------------------------------------------------------------
-	for (size_t i = 0; i < carts.size(); ++i) {
-		CThreeDModel* cart = carts[i];
+	// DRAW CARTS -------------------------------------------------------------------------------------------------------------------------------------------
+	for (size_t i = 0; i < carts.size(); ++i) { // For each cart in the array
+		CThreeDModel* cart = carts[i]; // Get the cart
 
-		// if we’re in cart camera mode, skip the top of cart1
+		// If we’re in cart camera mode, dont draw the top of cart1.
 		if (currentCameraMode == CART_CAMERA && cart == &cart1Top)
 			continue;
 
-		const glm::vec3& offset = cartOriginLocations[i];
-		glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(offset, 1.0f));
-		glm::vec3 deltaPos = rotatedPos - offset;
+		const glm::vec3& origin = cartOriginLocations[i]; // Get that carts origin.
+		glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(origin, 1.0f)); // Rotate that origin by the rotation matrix to get the new position.
+		// Set w to 1 so that translation is also applied?? I think.
+		glm::vec3 deltaPos = rotatedPos - origin; // Find the position of where the cart needs to move to.
 
-		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), deltaPos);
+		glm::mat4 modelCart = glm::translate(glm::mat4(1.0f), deltaPos); // Move the cart to those coordinates.
+
+		// Then make model view matrix and normal matrix.
 		glm::mat4 mv = view * modelCart;
 		glm::mat3 nm = glm::inverseTranspose(glm::mat3(mv));
-		glUniformMatrix3fv(
-			glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
-		glUniformMatrix4fv(
-			glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+		glUniformMatrix3fv(glGetUniformLocation(prog, "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(nm));
+		glUniformMatrix4fv(glGetUniformLocation(prog, "ModelViewMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
 
-		cart->DrawElementsUsingVBO(myShader);
+		cart->DrawElementsUsingVBO(myShader); // Draw that cart in that position.
 	}
 
-	// Flush and swap
 	glFlush();
-	glutSwapBuffers();
+	glutSwapBuffers(); // Exchange back buffer to front buffer.
 }
 
-void reshape(int width, int height)		// Resize the OpenGL window
+
+void reshape(int width, int height) // Resize the window.
 {
-	screenWidth = width; screenHeight = height;           // to ensure the mouse coordinates match 
-	// we will use these values to set the coordinate system
-
-	glViewport(0, 0, width, height);						// Reset The Current Viewport
-
-	//Set the projection matrix
+	screenWidth = width; screenHeight = height;
+	glViewport(0, 0, width, height);
 	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth / (GLfloat)screenHeight, 1.0f, 6000.0f);
+}
+
+bool CheckCollision(const glm::vec3& worldPos) {
+
+	// Get the wheel rotation matrix and the inverse.
+	glm::mat4 rotM = glm::rotate(glm::mat4(1.0f),glm::radians(wheelRotationAngle),glm::vec3(0, 0, 1));
+	glm::mat4 invRotM = glm::inverse(rotM);
+
+	// Test all collisions for things that dont rotate.
+	for (auto m : { &theFloor, &bottompart, &centerblock,
+					&stand1, &stand2, &stand3, &stand4 }) // For each static model.
+	{
+		// If the positions being given hit, return true.
+		if (m->IsPointInLeaf(worldPos.x, worldPos.y, worldPos.z))
+			return true;
+	}
+
+	// For wheel rotating objects.
+	for (auto m : {
+		&wheelringfront1,&wheelringfront2,
+		&wheelline1,&wheelline2,&wheelline3,&wheelline4,
+		&wheelline5,&wheelline6,&wheelline7,&wheelline8,
+		&wheelline9,&wheelline10,&wheelline11,&wheelline12,
+		&wheelline13,&wheelline14,&wheelline15,&wheelline16,
+		&wheelline17,&wheelline18,&wheelline19,&wheelline20,
+		&wheelline21,&wheelline22,&wheelline23,&wheelline24,
+		&wheelline25,&wheelline26,&wheelline27,&wheelline28,
+		&wheelline29,&wheelline30,&wheelline31,&wheelline32,
+		&innerwheelring1,&innerwheelring2,
+		&innerrect1,&innerrect2,&innerrect3,&innerrect4,
+		&innerrect5,&innerrect6,&innerrect7,&innerrect8,
+		&innerrect9,&innerrect10,&innerrect11,&innerrect12,
+		&innerrect13,&innerrect14,&innerrect15,&innerrect16,
+		&centerstar
+		})
+	{
+
+		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f)); // Now we have the coordinates of where the point would lie unrotated now.
+		
+		// Then check
+		if (m->IsPointInLeaf(local.x, local.y, local.z))
+			return true;
+	}
+
+	// For lights same thing.
+	for (auto& L : lights) {
+		// Undo the rotation of the object currently.
+		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
+
+		// Then check.
+		if (L.IsPointInLeaf(local.x, local.y, local.z))
+			return true;
+	}
+
+
+	// Now check the moving carts.
+	for (size_t i = 0; i < carts.size(); ++i) { // For each cart.
+		CThreeDModel* cart = carts[i]; // get the cart.
+
+		// First find the position of where the cart will be.
+		const glm::vec3& origin = cartOriginLocations[i]; // Get the origin location.
+
+		// Get the cart to where it is.
+		glm::vec3 rotatedPos = glm::vec3(rotM * glm::vec4(origin, 1.0f));
+		glm::vec3 deltaPos = rotatedPos - origin;
+		glm::mat4 cartM = glm::translate(glm::mat4(1.0f), deltaPos);  // Move it to that position.
+
+		// Then get the inverse again so we can check the point on its original location before rotation was applied.
+		glm::mat4 invCartM = glm::inverse(cartM);
+		glm::vec3 local = glm::vec3(invCartM * glm::vec4(worldPos, 1.0f));
+
+		if (cart->IsPointInLeaf(local.x, local.y, local.z))
+			return true;
+	}
+
+	return false;
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
 	keyState[key] = true;
 
+	// These need to be in here as they are toggle not holds.
 	if (key == '1') currentCameraMode = FREE_CAMERA;
 	else if (key == '2') currentCameraMode = CART_CAMERA;
 	else if (key == '3') currentCameraMode = FIXED_CAMERA;
 	else if (key == '4') currentCameraMode = FIXED_CAMERA_2;
 	else if (key == '5') currentCameraMode = FIXED_CAMERA_3;
 
-
 	if (key == 'r') {
-		// this will cycle 1,2,3,1
-		currentLightMode = LightMode((currentLightMode + 1) % 3);
+		currentLightMode = LightMode((currentLightMode + 1) % 3); // This will cycle 1,2,3,1
 	}
 
 }
 
 void keyboardUp(unsigned char key, int x, int y)
 {
-	keyState[key] = false; // Set the key state to false when released
+	keyState[key] = false; // Set the key state to false when released.
 }
 
 void special(int key, int x, int y)
@@ -642,132 +736,52 @@ void specialUp(int key, int x, int y)
 {
 }
 
-// returns true if worldPos is inside *any* of your meshes
-bool CheckCollision(const glm::vec3& worldPos) {
-
-	// 1) prepare the inverted rotation for all the wheel’s spinning parts
-	glm::mat4 rotM = glm::rotate(glm::mat4(1.0f),
-		glm::radians(wheelRotationAngle),
-		glm::vec3(0, 0, 1));
-	glm::mat4 invRotM = glm::inverse(rotM);
-
-	// 2) prepare the inverted translation for the cart top (if you ever need it)
-	//    (we'll recompute per?cart below)
-
-	// --- A) static geometry (identity transform) ---
-	for (auto m : { &theFloor, &bottompart, &centerblock,
-					&stand1, &stand2, &stand3, &stand4 })
-	{
-		if (m->IsPointInLeaf(worldPos.x, worldPos.y, worldPos.z))
-			return true;
-	}
-
-	// --- B) rotating wheel pieces ---
-	for (auto m : {
-		&wheelringfront1,& wheelringfront2,
-		& wheelline1,& wheelline2,& wheelline3,& wheelline4,
-		& wheelline5,& wheelline6,& wheelline7,& wheelline8,
-		& wheelline9,& wheelline10,& wheelline11,& wheelline12,
-		& wheelline13,& wheelline14,& wheelline15,& wheelline16,
-		& wheelline17,& wheelline18,& wheelline19,& wheelline20,
-		& wheelline21,& wheelline22,& wheelline23,& wheelline24,
-		& wheelline25,& wheelline26,& wheelline27,& wheelline28,
-		& wheelline29,& wheelline30,& wheelline31,& wheelline32,
-		& innerwheelring1,& innerwheelring2,
-		& innerrect1,& innerrect2,& innerrect3,& innerrect4,
-		& innerrect5,& innerrect6,& innerrect7,& innerrect8,
-		& innerrect9,& innerrect10,& innerrect11,& innerrect12,
-		& innerrect13,& innerrect14,& innerrect15,& innerrect16,
-		& centerstar
-		})
-	{
-		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
-		if (m->IsPointInLeaf(local.x, local.y, local.z))
-			return true;
-	}
-
-	// C) lights (blinking spheres) – treat them like any other mesh
-	for (auto& L : lights) {
-		// if your lights only rotate, you may need the same invRotM transformation:
-		glm::vec3 local = glm::vec3(invRotM * glm::vec4(worldPos, 1.0f));
-		if (L.IsPointInLeaf(local.x, local.y, local.z))
-			return true;
-	}
-
-	// --- D) moving carts (orbiting) ---
-	// For each cart: compute the same rotation-pivot you use in display(),
-	// then invert that translation to bring worldPos into cart-model space.
-	for (size_t i = 0; i < carts.size(); ++i) {
-		CThreeDModel* cart = carts[i];
-
-		const glm::vec3& offset = cartOriginLocations[i];
-
-		// where the pivot sent this cart this frame:
-		glm::vec3 rotatedPos = glm::vec3(rotM * glm::vec4(offset, 1.0f));
-		glm::vec3 deltaPos = rotatedPos - offset;
-
-		// build and invert the cart's model?space translation:
-		glm::mat4 cartM = glm::translate(glm::mat4(1.0f), deltaPos);
-		glm::mat4 invCartM = glm::inverse(cartM);
-
-		// transform the query point into cart?local coords:
-		glm::vec3 local = glm::vec3(invCartM * glm::vec4(worldPos, 1.0f));
-
-		if (cart->IsPointInLeaf(local.x, local.y, local.z))
-			return true;
-	}
-
-	return false;
-}
-
-
 void processKeys() {
-	// Always allow ESC to exit
+
+	// ESC to exit
 	if (keyState[27]) exit(0);
 
-	// Always allow wheel rotation
-	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed;
-	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed;
-	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f;
-	if (wheelRotationAngle < 0.0f)  wheelRotationAngle += 360.0f;
+	if (keyState['q']) wheelRotationAngle += wheelRotationSpeed; // Rotate to the right.
+	if (keyState['e']) wheelRotationAngle -= wheelRotationSpeed; // Rotate to the left.
 
-	// Block movement keys if not in free camera mode
+	if (wheelRotationAngle >= 360.0f) wheelRotationAngle -= 360.0f; // If you try to go beyond 360 go back to 0.
+	if (wheelRotationAngle < 0.0f)  wheelRotationAngle += 360.0f; // If you try and go bellow 0 go back to 360.
+
+	// Block any other movements if we are not in freecam mode.
 	if (currentCameraMode != FREE_CAMERA)
 		return;
 
-	// Movement directions
-	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);
-	glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+	glm::vec3 forwardAndBackwards = cameraTarget - cameraPos; // Get a direction vector for going forward.
+	glm::vec3 horizontal = glm::cross(forwardAndBackwards, cameraUp); // get a direction vector for going horizontal. 
+	// Cross allows us to have the same direction matrix but perpindicular to forwardAndBackwards.
+
 	glm::vec3 up = cameraUp;
 
+	// Move the camera by a given offset.
 	auto tryMove = [&](const glm::vec3& delta) {
-		// candidate new camera position
-		glm::vec3 np = cameraPos + delta;
 
-		// compute look-ahead point so we stop early
-		float len = glm::length(delta);
-		glm::vec3 dir = (len > 1e-6f ? delta / len : glm::vec3(0.0f));
-		glm::vec3 checkPos = np + dir * COLLISION_MARGIN;
+		// Get the coordinates for if the camera was to move to position delta.
+		glm::vec3 newPos = cameraPos + delta;
 
-		// only commit if buffer-adjusted point is collision-free
-		if (!CheckCollision(checkPos)) {
-			cameraPos = np;
-			cameraTarget += delta;
+		if (!CheckCollision(newPos)) { // If we were to move there and there would be no collision, do it.
+			cameraPos = newPos; 
+			cameraTarget += delta; // Also must change target otherwise you would be looking a different direction I think.
 		}
-		};
+	};
 
-	if (keyState['w'])   tryMove(forward * cameraSpeed);
-	if (keyState['s'])   tryMove(-forward * cameraSpeed);
-	if (keyState['a'])   tryMove(-right * cameraSpeed);
-	if (keyState['d'])   tryMove(right * cameraSpeed);
-	if (keyState[32])    tryMove(up * cameraSpeed);  // space
-	if (keyState['z'])   tryMove(-up * cameraSpeed);  // fly down
+	// The deltas are just the direction vector * the camera speed.
+	if (keyState['w'])   tryMove(forwardAndBackwards * cameraSpeed);
+	if (keyState['s'])   tryMove(-forwardAndBackwards * cameraSpeed);
+	if (keyState['a'])   tryMove(-horizontal * cameraSpeed);
+	if (keyState['d'])   tryMove(horizontal * cameraSpeed);
+	if (keyState[32])    tryMove(up * cameraSpeed); // Space
+	if (keyState['z'])   tryMove(-up * cameraSpeed);
 }
 
-
-
-void mouse_callback(int xpos, int ypos)
+void mouse_callback(int xpos, int ypos) // Xpos and ypos is given to us by glutPassiveMotionFunc.
 {
+
+	// First time the camera will be directly in the centre to start.
 	if (firstMouse)
 	{
 		lastX = xpos;
@@ -775,34 +789,45 @@ void mouse_callback(int xpos, int ypos)
 		firstMouse = false;
 	}
 
+	// Get how much you have moved the mouse by.
 	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed
+	float yoffset = lastY - ypos;
 
-	float sensitivity = 0.1f;
+	// Add the sensitivity
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
+	// Apply the change in movement to yaw and pitch.
 	yaw += xoffset;
 	pitch += yoffset;
 
+	// Don't let the head do a full 360 on the pitch.
 	if (pitch > 89.0f)
 		pitch = 89.0f;
 	if (pitch < -89.0f)
 		pitch = -89.0f;
 
 	glm::vec3 direction;
+
+	// Use the same 
+	// Yaw, left and right. ϕ.
+	// Pitch, up and down. θ.
+	// Need to convert the yaw and pitch info into a vector.
+	// https://math.stackexchange.com/questions/2618527/converting-from-yaw-pitch-roll-to-vector
+
 	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 	direction.y = sin(glm::radians(pitch));
 	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraTarget = glm::normalize(direction) + cameraPos;
+	// Now we have a direction vector.
+
+	// Make the direction vector apply to actual coords of where to look at.
+	cameraTarget = direction + cameraPos;
 
 	// After handling movement, reset mouse to center
 	glutWarpPointer(screenWidth / 2, screenHeight / 2);
 	lastX = screenWidth / 2;
 	lastY = screenHeight / 2;
 }
-
-
 
 void idle()
 {
