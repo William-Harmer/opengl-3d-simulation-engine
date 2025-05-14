@@ -835,7 +835,6 @@ void idle()
 
 	glutPostRedisplay();
 }
-/**************** END OPENGL FUNCTIONS *************************/
 
 int main(int argc, char** argv)
 {
